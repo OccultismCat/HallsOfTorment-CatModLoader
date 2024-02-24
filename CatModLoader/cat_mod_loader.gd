@@ -1,24 +1,15 @@
 extends Control
 
-var mods:Array
-var mod_log : Array
+var logs : Array
 var mods_folder := OS.get_executable_path().get_base_dir() + "/mods/"
 var mods_dir := DirAccess.open(mods_folder)
 var mods_loaded : bool = false
 var input_timer = 0.0
-#const mod = "res://addons/debug_mode/debug_mode.gd"
-
-
 
 # we load and instantiate the new scene manually, according to
 # https://docs.godotengine.org/en/latest/tutorials/scripting/singletons_autoload.html#custom-scene-switcher
 # so that we have a little more control over it than using change_scene...
 
-func toggle_autoplayer(value: bool):
-	ProjectSettings.set_setting("halls_of_torment/development/enable_autoplayer", value)
-	var setting = ProjectSettings.get_setting("halls_of_torment/development/enable_autoplayer")
-	print('ENABLE_AUTOPLAYER: ', setting)
-	
 func get_all_mods():
 	if mods_dir:
 		mods_dir.list_dir_begin()
@@ -26,7 +17,6 @@ func get_all_mods():
 		while file != "":
 			if not file.ends_with('.gd'):
 				load_mods_from_folder(mods_folder + file)
-			mods.append(file)
 			file = mods_dir.get_next()
 	if not mods_dir:
 		DirAccess.make_dir_absolute(mods_folder)
@@ -34,7 +24,7 @@ func get_all_mods():
 func load_mod(mod_path):
 	var mod_script = ResourceLoader.load(mod_path)
 	if mod_script:
-		mod_log.append("Mod Loaded: " + mod_path)
+		logs.append("Mod Loaded: " + mod_path)
 		add_child(mod_script.new())
 			
 func load_mods_from_folder(path):
@@ -46,33 +36,59 @@ func load_mods_from_folder(path):
 			load_mod(path + '/' + file)
 			file = inner_mod_folder.get_next()
 			
-func print_loaded_mods():
-	for log in mod_log:
+func print_loader_text():
+	for log in logs:
 		print(log)
 	
 func on_cooldown() -> bool:
-	return input_timer < 5.0
+	return input_timer < 0.1
 	#return (Engine.get_process_frames() - input_timer) < (60 * 3)
 	
 func reset_cooldown():
 	input_timer = 0.0
 	
+func get_current_scene():
+	return GameState.CurrentScene
+	
+func get_current_scene_name():
+	return GameState._stateScenes[GameState.CurrentState]
+	
+func get_player_pos():
+	return Global.World.get_player_position()
+	
+func set_player_pos(x, y):
+	var current_pos = get_player_pos()
+	var player_pos = get_player()
+	var set_pos = player_pos.getChildNodeWithMethod("set_worldPosition")
+	if set_pos:
+		current_pos.x = current_pos.x + x
+		current_pos.y = current_pos.y + y
+		set_pos.set_worldPosition(current_pos)
+	
+func get_player():
+	return Global.World.Player
+	
+func toggle_autoplayer(value: bool):
+	ProjectSettings.set_setting("halls_of_torment/development/enable_autoplayer", value)
+	var setting = ProjectSettings.get_setting("halls_of_torment/development/enable_autoplayer")
+	print('ENABLE_AUTOPLAYER: ', setting)
+	
 func _ready():
-	get_all_mods()
-	toggle_autoplayer(false)
+	if mods_loaded == false:
+		get_all_mods()
+		toggle_autoplayer(true)
+		print_loader_text()
+		mods_loaded = true
 	
 func _process(delta):
 	input_timer += delta
 	if Input.is_key_pressed(KEY_1) and not on_cooldown():
-		#input_timer = Engine.get_process_frames()
-		#var time = int(Engine.get_process_frames() / 60)
-		#print(time)
-		print_loaded_mods()
+		var current_scene_name = get_current_scene_name()
+		var current_scene = get_current_scene()
+		print(current_scene_name)
+		print(current_scene)
+		print_loader_text()
 		reset_cooldown()
-	if mods_loaded == false:
-		if GameState.CurrentState == GameState.States.Overworld:
-			pass
-			#mods_loaded = true
 	
 #func load_mods():
 #	var project_path = OS.get_executable_path()
