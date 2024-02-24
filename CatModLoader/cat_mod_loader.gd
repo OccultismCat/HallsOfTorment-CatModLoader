@@ -35,10 +35,12 @@ func load_mods_from_folder(path):
 		while file != "":
 			load_mod(path + '/' + file)
 			file = inner_mod_folder.get_next()
-			
+	
 func print_loader_text():
+	print("")
 	for log in logs:
-		print(log)
+		cat_log(log)
+	print("")
 	
 func on_cooldown() -> bool:
 	return input_timer < 0.1
@@ -53,8 +55,30 @@ func get_current_scene():
 func get_current_scene_name():
 	return GameState._stateScenes[GameState.CurrentState]
 	
+func get_game_states():
+	var states : Array = []
+	for state in GameState.States:
+		states.append(state)
+	if states != []:
+		return states
+		
+func get_current_game_state():
+	var states = get_game_states()
+	return states[GameState.CurrentState]
+		
+func get_current_game_state_id():
+	return GameState.CurrentState
+	
+func set_game_state(state):
+	var states = get_game_states()
+	cat_log('Setting New GameState!', states[state])
+	GameState.SetState(state) #GameState.States.RegisterOfHalls
+	
 func get_player_pos():
 	return Global.World.get_player_position()
+	
+func get_player():
+	return Global.World.Player
 	
 func set_player_pos(x, y):
 	var current_pos = get_player_pos()
@@ -65,31 +89,51 @@ func set_player_pos(x, y):
 		current_pos.y = current_pos.y + y
 		set_pos.set_worldPosition(current_pos)
 	
-func get_player():
-	return Global.World.Player
+func collect_all_xp():
+	cat_log("Collecting All XP!")
+	var player = CatModLoader.get_player()
+	var collectAllXPNode = player.getChildNodeWithMethod("collectAllXP")
+	if collectAllXPNode != null:
+		collectAllXPNode.collectAllXP()
 	
 func toggle_autoplayer(value: bool):
 	ProjectSettings.set_setting("halls_of_torment/development/enable_autoplayer", value)
 	var setting = ProjectSettings.get_setting("halls_of_torment/development/enable_autoplayer")
 	print('ENABLE_AUTOPLAYER: ', setting)
+
+func cat_log(text, extra=null):
+	var mod = "[CatModLoader]: "
+	if typeof(text) == TYPE_STRING:
+		print(mod + text)
+	else:
+		print(mod + str(text))
+	if extra != null:
+		if typeof(extra) == TYPE_STRING:
+			print(mod + extra)
+		else:
+			print(mod + str(extra))
+	print("")
+	
+func print_mod_controls():
+	cat_log('[1] - Prints CatModLoader Log')
 	
 func _ready():
 	if mods_loaded == false:
 		get_all_mods()
 		toggle_autoplayer(true)
 		print_loader_text()
-		mods_loaded = true
 	
 func _process(delta):
-	input_timer += delta
-	if Input.is_key_pressed(KEY_1) and not on_cooldown():
-		var current_scene_name = get_current_scene_name()
-		var current_scene = get_current_scene()
-		print(current_scene_name)
-		print(current_scene)
-		print_loader_text()
-		reset_cooldown()
-	
+	if GameState.CurrentState == GameState.States.Overworld and get_current_scene() != null:
+		if mods_loaded == false:
+			print_mod_controls()
+		mods_loaded = true
+	if mods_loaded == true:
+		input_timer += delta
+		if Input.is_key_pressed(KEY_1) and not on_cooldown():
+			print_loader_text()
+			reset_cooldown()
+
 #func load_mods():
 #	var project_path = OS.get_executable_path()
 #	print(str(project_path))
