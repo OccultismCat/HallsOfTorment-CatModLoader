@@ -4,7 +4,7 @@ func _ready():
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	
 func _process(_delta):
-	if Input.is_key_pressed(KEY_F1):
+	if Input.is_key_pressed(KEY_X):
 		get_tree().quit()
 	
 	if Input.is_action_just_pressed("DebugMenu"):

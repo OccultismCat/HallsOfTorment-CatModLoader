@@ -32,12 +32,10 @@ func get_all_mods():
 		DirAccess.make_dir_absolute(mods_folder)
 	
 func load_mod(mod_path):
-	for mod in mods:
-		print(mod)
-		var mod_script = ResourceLoader.load(mods_folder + mod)
-		if mod_script:
-			mod_log.append("Mod Loaded: " + mods_folder + mod)
-			add_child(mod_script.new())
+	var mod_script = ResourceLoader.load(mod_path)
+	if mod_script:
+		mod_log.append("Mod Loaded: " + mod_path)
+		add_child(mod_script.new())
 			
 func load_mods_from_folder(path):
 	var inner_mod_folder = DirAccess.open(path)
@@ -45,7 +43,7 @@ func load_mods_from_folder(path):
 		inner_mod_folder.list_dir_begin()
 		var file = inner_mod_folder.get_next()
 		while file != "":
-			mod_log.append("Mod Loaded: " + path + '/' + file)
+			load_mod(path + '/' + file)
 			file = inner_mod_folder.get_next()
 			
 func print_loaded_mods():
@@ -62,7 +60,6 @@ func reset_cooldown():
 func _ready():
 	get_all_mods()
 	toggle_autoplayer(false)
-	load_mod(false)
 	
 func _process(delta):
 	input_timer += delta
