@@ -1,10 +1,11 @@
 extends Control
 
 var mods:Array
-var mod_log : String
-var mod_folder := "res://mods/" #OS.get_executable_path() + '\\mods\\'
-var mods_dir := DirAccess.open(mod_folder)
+var mod_log : Array
+var mods_folder := OS.get_executable_path().get_base_dir() + "/mods/"
+var mods_dir := DirAccess.open(mods_folder)
 var mods_loaded : bool = false
+var input_timer = 0.0
 #const mod = "res://addons/debug_mode/debug_mode.gd"
 
 
@@ -23,29 +24,57 @@ func get_all_mods():
 		mods_dir.list_dir_begin()
 		var file = mods_dir.get_next()
 		while file != "":
+			if not file.ends_with('.gd'):
+				load_mods_from_folder(mods_folder + file)
 			mods.append(file)
 			file = mods_dir.get_next()
 	if not mods_dir:
-		DirAccess.make_dir_absolute(mod_folder)
+		DirAccess.make_dir_absolute(mods_folder)
 	
 func load_mod(mod_path):
-	var mod = mods[0]
-	print(mod_folder + mod)
-	var mod_script = ResourceLoader.load(mod_folder + mod)
-	if mod_script:
-		mod_log = ("Mod Loaded: " + mod_folder + mod)
-		add_child(mod_script.new())
+	for mod in mods:
+		print(mod)
+		var mod_script = ResourceLoader.load(mods_folder + mod)
+		if mod_script:
+			mod_log.append("Mod Loaded: " + mods_folder + mod)
+			add_child(mod_script.new())
+			
+func load_mods_from_folder(path):
+	var inner_mod_folder = DirAccess.open(path)
+	if inner_mod_folder:
+		inner_mod_folder.list_dir_begin()
+		var file = inner_mod_folder.get_next()
+		while file != "":
+			mod_log.append("Mod Loaded: " + path + '/' + file)
+			file = inner_mod_folder.get_next()
+			
+func print_loaded_mods():
+	for log in mod_log:
+		print(log)
+	
+func on_cooldown() -> bool:
+	return input_timer < 5.0
+	#return (Engine.get_process_frames() - input_timer) < (60 * 3)
+	
+func reset_cooldown():
+	input_timer = 0.0
 	
 func _ready():
 	get_all_mods()
-	toggle_autoplayer(true)
+	toggle_autoplayer(false)
 	load_mod(false)
 	
 func _process(delta):
-	#await get_tree().create_timer(3, true).timeout
+	input_timer += delta
+	if Input.is_key_pressed(KEY_1) and not on_cooldown():
+		#input_timer = Engine.get_process_frames()
+		#var time = int(Engine.get_process_frames() / 60)
+		#print(time)
+		print_loaded_mods()
+		reset_cooldown()
 	if mods_loaded == false:
-		print(mod_log)
-		#if GameState.CurrentState == GameState.States.Overworld:
+		if GameState.CurrentState == GameState.States.Overworld:
+			pass
 			#mods_loaded = true
 	
 #func load_mods():
