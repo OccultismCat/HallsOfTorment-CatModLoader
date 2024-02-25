@@ -18,6 +18,9 @@ def get_args():
     args[1] = get_arg(2)
 
 def launch_game(args):
+    pack_file = 'HoT-CatModLoader.pck'
+    if not os.path.exists(pack_file):
+        pack_file = 'HallsOfTorment.pck'
     #game_path = "C:\\Github-Repos\\HallsOfTorment-Modding\\"
     commands = [
         'start',
@@ -25,7 +28,7 @@ def launch_game(args):
         '/K',
         'HallsOfTorment.exe',
         '--main-pack',
-        'HoT-CatModLoader.pck'
+        f'{pack_file}'
     ]
     if args:
         for arg in args:
