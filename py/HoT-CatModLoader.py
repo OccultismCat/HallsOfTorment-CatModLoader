@@ -203,7 +203,10 @@ def launch_game(set_pack_file=None):
         for arg in args:
             if arg != None:
                 commands.append(arg)
-        log(commands)
+    if not os.path.exists(commands[3]):
+        log(f"Couldn't find {commands[3]}!", 'error')
+        time.sleep(3)
+        return
     try:
         os.system(' '.join(commands))
     except Exception as error:
