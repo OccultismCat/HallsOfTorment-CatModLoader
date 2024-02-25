@@ -261,10 +261,6 @@ def set_launcher_setting(setting, value):
         return
     try:
         settings['launcher_settings'][setting] = value
-        log(settings['launcher_settings'][setting], 'd')
-        log(setting, 'd')
-        log(value, 'd')
-        os.system('pause')
     except Exception as error:
         log(error, 'error')
     save_settings(settings)
@@ -319,8 +315,14 @@ def auto_menu_start(options):
         options[get_launcher_setting('autostart')][1]()
     except Exception as error:
         log(error, 'error')
+    while True:
+        if is_running('HallsOfTorment.exe'):
+            time.sleep(1)
+        else:
+            break
 
 def menu_start():
+    os.system('cls')
     settings = load_launch_settings()
     set_console_size(60, 10)
     options = [
