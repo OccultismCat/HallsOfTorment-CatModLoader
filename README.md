@@ -2,7 +2,7 @@
 
 
 # HallsOfTorment Mods & CatModLoader. 
-![](https://fastupload.io/secure/file/obj3jb2Qo3DxJ)
+[Preview GIF](https://fastupload.io/en/kPUcYDoaSkxZUeB/preview)
 
 ## Setup.
 **<ins>Setup for CatModLoader</ins>**
