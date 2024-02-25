@@ -1,4 +1,4 @@
-import os, sys, time, psutil, threading
+import os, sys, time, json, psutil, threading
 from colorama import Fore, init
 init()
 
@@ -65,7 +65,10 @@ def log(text, type=None, var=None):
     elif type == 'text':
         print(Fore.LIGHTWHITE_EX + str(text) + Fore.RESET)
     elif type == 'menu':
-        print(Fore.YELLOW + str(text) + Fore.RESET)
+        if var:
+            print(Fore.YELLOW + str(text) + f': {var}' + Fore.RESET)
+        else:
+            print(Fore.YELLOW + str(text) + Fore.RESET)
     elif type == 'error':
         print(log_start + Fore.RED + '[ERROR] | ' + str(text) + '\n' + Fore.RESET)
     elif type == 'debug' or type == 'd':
@@ -222,27 +225,109 @@ def menu_option_launch_exported_game():
     os.system('cls')
     launch_game('exported')
 
-def auto_menu_start(options, enabled=False):
-    if enabled == False:
+def create_settings():
+    settings_data = {
+        "launcher_settings": {
+            "arg1": "",
+            "arg2": "",
+            "autostart_enabled": False,
+            "autostart": 0
+        },
+    }
+    with open('settings.json', 'w') as file:
+        json.dump(settings_data, file, indent=4)
+
+def save_settings(settings):
+    if not settings:
+        return
+    with open('settings.json', 'w+') as file:
+        json.dump(settings, file, indent=4)
+
+def get_launcher_setting(search):
+    if not search:
+        return
+    settings = load_launch_settings()
+    try:
+        return settings['launcher_settings'][search]
+    except Exception as error:
+        log(error, 'error')
+
+def set_launcher_setting(setting, value):
+    settings = load_launch_settings()
+    if not settings:
         return
     try:
-        if os.path.exists('modded.txt'):
-            options[0][1]()
-        elif os.path.exists('default.txt'):
-            options[1][1]()
-        elif os.path.exists('exported.txt'):
-            options[2][1]()
+        settings['launcher_settings'][setting] = value
+        log(settings['launcher_settings'][setting], 'd')
+        log(setting, 'd')
+        log(value, 'd')
+        os.system('pause')
+    except Exception as error:
+        log(error, 'error')
+    save_settings(settings)
+
+def toggle_launcher_setting(setting):
+    settings = load_launch_settings()
+    if not setting:
+        return
+    try:
+        setting_value = settings['launcher_settings'][setting]
+    except Exception as error:
+        log(error, 'error')
+    if setting_value == False:
+        set_launcher_setting(setting, True)
+    elif setting_value == True:
+        set_launcher_setting(setting, False)
+
+def load_launch_settings():
+    if not os.path.exists('settings.json'):
+        create_settings()
+    try:
+        with open('settings.json', 'r') as file:
+            settings = json.load(file)
+            return settings
+    except Exception as error:
+        log(error, 'error')
+
+def menu_settings():
+    while True:
+        os.system('cls')
+        options = [
+            ['Auto Start Game', str(get_launcher_setting('autostart_enabled'))]
+        ]
+        log('[Launch Settings]', 'title')
+        for index, option in enumerate(options):
+            log(f'[{(index + 1)}] - {option[0]}', 'menu', option[1])
+        user_input = input('\nOption: ')
+        if user_input == '0' or user_input == 'e':
+            return
+        elif user_input == '1':
+            toggle_launcher_setting('autostart_enabled')
+
+def auto_menu_start(options):
+    log('[AutoStart Loading]', 'title')
+    log('Use "CTRL+C" to cancel', 'text')
+    try:
+        time.sleep(5)
+    except KeyboardInterrupt:
+        os.system('cls')
+        return
+    try:
+        options[get_launcher_setting('autostart')][1]()
     except Exception as error:
         log(error, 'error')
 
 def menu_start():
+    settings = load_launch_settings()
     set_console_size(60, 10)
     options = [
         ['Start Modded Game', menu_option_launch_modded_game],
         ['Start Default Game', menu_option_launch_game],
-        ['Start Exported Game', menu_option_launch_exported_game]
+        ['Start Exported Game', menu_option_launch_exported_game],
+        ['Settings', menu_settings]
         ]
-    auto_menu_start(options, enabled=True)
+    if get_launcher_setting('autostart_enabled') == True:
+        auto_menu_start(options)
     log('[Launch Menu]', 'title')
     for index, option in enumerate(options):
         log(f'[{(index + 1)}] - {option[0]}', 'menu')
@@ -258,9 +343,8 @@ def menu_start():
             break
 
 def start():
-    menu_start()
-    os.system('pause')
+    while True:
+        menu_start()
 
 splash_screen()
-while True:
-    start()
+start()
