@@ -80,13 +80,22 @@ func get_player_pos():
 func get_player():
 	return Global.World.Player
 	
-func set_player_pos(x, y):
+func add_player_pos(x, y):
 	var current_pos = get_player_pos()
 	var player_pos = get_player()
 	var set_pos = player_pos.getChildNodeWithMethod("set_worldPosition")
 	if set_pos:
 		current_pos.x = current_pos.x + x
 		current_pos.y = current_pos.y + y
+		set_pos.set_worldPosition(current_pos)
+
+func set_player_pos(x, y):
+	var current_pos = get_player_pos()
+	var player_pos = get_player()
+	var set_pos = player_pos.getChildNodeWithMethod("set_worldPosition")
+	if set_pos:
+		current_pos.x = x
+		current_pos.y = y
 		set_pos.set_worldPosition(current_pos)
 	
 func collect_all_xp():
@@ -120,7 +129,7 @@ func print_mod_controls():
 func _ready():
 	if mods_loaded == false:
 		get_all_mods()
-		toggle_autoplayer(true)
+		toggle_autoplayer(false)
 		print_loader_text()
 	
 func _process(delta):
@@ -128,6 +137,7 @@ func _process(delta):
 		if mods_loaded == false:
 			print_mod_controls()
 		mods_loaded = true
+		#set_game_state(GameState.States.RegisterOfHalls)
 	if mods_loaded == true:
 		input_timer += delta
 		if Input.is_key_pressed(KEY_1) and not on_cooldown():

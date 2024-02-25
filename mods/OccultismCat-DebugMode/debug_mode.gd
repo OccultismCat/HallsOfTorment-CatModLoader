@@ -36,3 +36,7 @@ func _process(delta):
 	if Input.is_key_pressed(KEY_F8) and not input_on_cooldown(0.5):
 		CatModLoader.collect_all_xp()
 		reset_cooldown()
+		
+	if Input.is_key_pressed(KEY_F7) and not input_on_cooldown(0.5):
+		Global.World.trigger_finale()
+		reset_cooldown()
