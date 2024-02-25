@@ -21,5 +21,5 @@
     - TBA
   
 **<ins>Getting</ins>**
-2. **TBA**
+1. **TBA**
     - TBA
