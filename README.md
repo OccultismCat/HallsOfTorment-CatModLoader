@@ -1,7 +1,7 @@
-# HallsOfTorment Mods & CatModLoader
+# HallsOfTorment Mods & CatModLoader.
 
-## How to use
-**<ins>Installing CatModLoader</ins>**
+## Setup.
+**<ins>Setup for CatModLoader</ins>**
 1. **Download the ZIP file:**
     - [HallsOfTorment-CatModLoader Repo](https://github.com/OccultismCat/HallsOfTorment-CatModLoader/archive/refs/heads/main.zip)
 
@@ -14,3 +14,12 @@
     - Extract "CatModLoader" folder into ```./steamapps/common/Halls of Torment/```
     - [Optional] Extract "mods" folder into ```./steamapps/common/Halls of Torment/```
     - Replace any duplicate folders/files.
+
+## Generating/Getting modded .pck file.
+**<ins>Generating</ins>**
+1. **TBA**
+    - TBA
+  
+**<ins>Getting</ins>**
+2. **TBA**
+    - TBA
