@@ -1,12 +1,14 @@
 import os
 
-destination_path = r'C:\Github-Repos\HallsOfTorment-CatModLoader'
+destination_path = r'C:\Github-Repos\HallsOfTorment-CatModLoader\py'
 
 files_to_delete = [
     'HallsOfTorment.exe',
     'HallsOfTorment.pck',
     'steam_api64.dll',
-    'steam_appid.txt'
+    'steam_appid.txt',
+    'HoT-CatModLoader.exe',
+    'settings.json'
 ]
 
 for file_name in files_to_delete:

@@ -234,6 +234,7 @@ def create_settings():
             "arg1": "",
             "arg2": "",
             "autostart_enabled": False,
+            "autostart_timer": 2,
             "autostart": 0
         },
     }
@@ -307,7 +308,7 @@ def auto_menu_start(options):
     log('[AutoStart Loading]', 'title')
     log('Use "CTRL+C" to cancel', 'text')
     try:
-        time.sleep(5)
+        time.sleep(get_launcher_setting('autostart_timer'))
     except KeyboardInterrupt:
         os.system('cls')
         return
@@ -322,34 +323,28 @@ def auto_menu_start(options):
             break
 
 def menu_start():
-    os.system('cls')
-    settings = load_launch_settings()
-    set_console_size(60, 10)
-    options = [
-        ['Start Modded Game', menu_option_launch_modded_game],
-        ['Start Default Game', menu_option_launch_game],
-        ['Start Exported Game', menu_option_launch_exported_game],
-        ['Settings', menu_settings]
-        ]
-    if get_launcher_setting('autostart_enabled') == True:
-        auto_menu_start(options)
-    log('[Launch Menu]', 'title')
-    for index, option in enumerate(options):
-        log(f'[{(index + 1)}] - {option[0]}', 'menu')
-    user_input = input('\nOption: ')
-    try:
-        options[int(user_input) - 1][1]()
-    except Exception as error:
-        print(str(error))
     while True:
-        if is_running('HallsOfTorment.exe'):
-            time.sleep(1)
-        else:
-            break
+        set_console_size(60, 10)
+        options = [
+            ['Start Modded Game', menu_option_launch_modded_game],
+            ['Start Default Game', menu_option_launch_game],
+            ['Start Exported Game', menu_option_launch_exported_game],
+            ['Settings', menu_settings]
+            ]
+        if get_launcher_setting('autostart_enabled') == True:
+            while True:
+                auto_menu_start(options)
+        log('[Launch Menu]', 'title')
+        for index, option in enumerate(options):
+            log(f'[{(index + 1)}] - {option[0]}', 'menu')
+        user_input = input('\nOption: ')
+        try:
+            options[int(user_input) - 1][1]()
+        except Exception as error:
+            print(str(error))
 
 def start():
-    while True:
-        menu_start()
+    menu_start()
 
 splash_screen()
 start()
