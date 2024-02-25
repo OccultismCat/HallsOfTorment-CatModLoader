@@ -3,7 +3,7 @@
 ## Setup.
 **<ins>Setup for CatModLoader</ins>**
 1. **Download the ZIP file:**
-    - [HallsOfTorment-CatModLoader Repo](https://github.com/OccultismCat/HallsOfTorment-CatModLoader/archive/refs/heads/main.zip)
+    - [HallsOfTorment-CatModLoader](https://github.com/OccultismCat/HallsOfTorment-CatModLoader/archive/refs/heads/main.zip)
 
 2. **Move the ZIP file:**
     - Navigate to your Halls of Torment installation directory. Typically, it is located at:
@@ -17,8 +17,15 @@
 
 ## Generating/Getting modded .pck file.
 **<ins>Generate</ins>**
-1. **TBA**
-    - TBA
+
+**<ins>Tools Required</ins>**
+1. **GodotPCKExplorer**
+    - [GodotPCKExplorer](https://github.com/DmitriySalnikov/GodotPCKExplorer)
+2. **GodotRETools**
+    - [GodotRETools](https://github.com/bruvzg/gdsdecomp)
+3. **[Optional] Godot 4.2 Editor**
+    - [Godot 4.2](https://godotengine.org/download/archive/4.2-stable/)
+
   
 **<ins>Get</ins>**
 1. **TBA**
