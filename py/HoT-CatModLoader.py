@@ -54,12 +54,16 @@ pack_files = {
     }
 }
 
-def log(text, type=None):
+def log(text, type=None, var=None):
     global version
-    title = Fore.YELLOW + '|' + Fore.LIGHTRED_EX + ' [CatModLoader] ' + Fore.YELLOW + '|' + Fore.GREEN + f' [V{version}] ' + Fore.YELLOW + '|\n' + Fore.RESET
+    if not var:
+        var = ''
+    title = Fore.YELLOW + ' |' + Fore.LIGHTRED_EX + ' [CatModLoader] ' + Fore.YELLOW + '|' + Fore.GREEN + f' [V{version}] ' + Fore.YELLOW + '| ' + Fore.RESET
     log_start = Fore.YELLOW + '[CatModLoader]: ' + Fore.RESET
     if type == 'title':
-        print(title)
+        print(str(text) + title + str(var))
+    elif type == 'text':
+        print(Fore.LIGHTWHITE_EX + str(text) + Fore.RESET)
     elif type == 'menu':
         print(Fore.YELLOW + str(text) + Fore.RESET)
     elif type == 'error':
@@ -146,7 +150,6 @@ def get_pack_file(search=None):
     pack_file = pack_files['modded']['file']
     if not os.path.exists(pack_files['modded']['file']):
         pack_file = pack_files['default']['file']
-        log('No modded pack file found!', 'error')
     return pack_file
 
 def watch_game():
@@ -177,14 +180,22 @@ def launch_game(set_pack_file=None):
     else:
         pack_file = get_pack_file()
     #game_path = "C:\\Github-Repos\\HallsOfTorment-Modding\\"
-    commands = [
-        'start',
-        'cmd.exe',
-        '/K',
-        f'HallsOfTorment.exe',
-        '--main-pack',
-        f'{pack_file}'
-    ]
+    if set_pack_file == 'exported':
+        commands = [
+            'start',
+            'cmd.exe',
+            '/K',
+            'HallsOfTorment.exe',
+        ]
+    else:
+        commands = [
+            'start',
+            'cmd.exe',
+            '/K',
+            'HallsOfTorment.exe',
+            '--main-pack',
+            f'{pack_file}'
+        ]
     if args:
         for arg in args:
             if arg != None:
@@ -196,23 +207,43 @@ def launch_game(set_pack_file=None):
         print(str(error))
     watch_game_thread()
 
-def menu_option_launch_game():
-    set_console_size(90, 10)
-    os.system('cls')
-    launch_game('default')
-
 def menu_option_launch_modded_game():
     set_console_size(90, 10)
     os.system('cls')
     launch_game()
 
+def menu_option_launch_game():
+    set_console_size(90, 10)
+    os.system('cls')
+    launch_game('default')
+
+def menu_option_launch_exported_game():
+    set_console_size(90, 10)
+    os.system('cls')
+    launch_game('exported')
+
+def auto_menu_start(options, enabled=False):
+    if enabled == False:
+        return
+    try:
+        if os.path.exists('modded.txt'):
+            options[0][1]()
+        elif os.path.exists('default.txt'):
+            options[1][1]()
+        elif os.path.exists('exported.txt'):
+            options[2][1]()
+    except Exception as error:
+        log(error, 'error')
+
 def menu_start():
     set_console_size(60, 10)
     options = [
         ['Start Modded Game', menu_option_launch_modded_game],
-        ['Start Default Game', menu_option_launch_game]
+        ['Start Default Game', menu_option_launch_game],
+        ['Start Exported Game', menu_option_launch_exported_game]
         ]
-    log('', 'title')
+    auto_menu_start(options, enabled=True)
+    log('[Launch Menu]', 'title')
     for index, option in enumerate(options):
         log(f'[{(index + 1)}] - {option[0]}', 'menu')
     user_input = input('\nOption: ')
@@ -220,12 +251,16 @@ def menu_start():
         options[int(user_input) - 1][1]()
     except Exception as error:
         print(str(error))
+    while True:
+        if is_running('HallsOfTorment.exe'):
+            time.sleep(1)
+        else:
+            break
 
 def start():
-    splash_screen()
     menu_start()
-    print('\n')
     os.system('pause')
 
+splash_screen()
 while True:
     start()
