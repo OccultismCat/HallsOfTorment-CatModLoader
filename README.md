@@ -16,10 +16,10 @@
     - Replace any duplicate folders/files.
 
 ## Generating/Getting modded .pck file.
-**<ins>Generating</ins>**
+**<ins>Generate</ins>**
 1. **TBA**
     - TBA
   
-**<ins>Getting</ins>**
+**<ins>Get</ins>**
 1. **TBA**
     - TBA
