@@ -1,4 +1,6 @@
-# HallsOfTorment Mods & CatModLoader.
+![](https://raw.githubusercontent.com/OccultismCat/HallsOfTorment-CatModLoader/main/py/CatModLoader.ico)
+
+# HallsOfTorment Mods & CatModLoader. 
 
 ## Setup.
 **<ins>Setup for CatModLoader</ins>**
