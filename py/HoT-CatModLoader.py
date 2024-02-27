@@ -343,7 +343,7 @@ def menu_start_auto(options):
         os.system('cls')
         return
     try:
-        options[get_launcher_setting('autostart')][1]()
+        options[get_launcher_setting('autostart')][1](options[get_launcher_setting('autostart')][2])
     except Exception as error:
         log(error, 'error')
     while True:
