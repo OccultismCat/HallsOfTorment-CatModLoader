@@ -10,6 +10,7 @@ func reset_cooldown():
 
 func _ready():
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	CatModLoader.toggle_autoplayer(true)
 	
 func _process(delta):
 	input_timer += delta
@@ -39,4 +40,13 @@ func _process(delta):
 		
 	if Input.is_key_pressed(KEY_F7) and not input_on_cooldown(0.5):
 		Global.World.trigger_finale()
+		reset_cooldown()
+	
+	if Input.is_key_pressed(KEY_F6) and not input_on_cooldown(0.5):
+		var items : Array = ['head_warcry', 'head_battlerage', 'neck_gatherers_charm', 'ring_sealofrebirth', 'ring_ratring', 'body_vampirism', 'feet_septicboots', 'hand_quickhand']
+		for item in items:
+			var new_item = Global.ItemsPool.find_item_with_id(item)
+			if new_item:
+				CatModLoader.cat_log('Equipping new item! ', item)
+				Global.ItemsPool.equip_item(new_item, CatModLoader.get_player())
 		reset_cooldown()

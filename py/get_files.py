@@ -1,7 +1,7 @@
 import os
 
 source_path = r'C:\Program Files (x86)\Steam\steamapps\common\Halls of Torment'
-destination_path = r'C:\Github-Repos\HallsOfTorment-CatModLoader\py'
+destination_path = os.path.dirname(os.path.realpath(__file__)) + r'\\'
 
 files_to_copy = [
     'HallsOfTorment.exe',

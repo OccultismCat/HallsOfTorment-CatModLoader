@@ -1,21 +1,29 @@
 import os
 
-destination_path = r'C:\Github-Repos\HallsOfTorment-CatModLoader\py'
+destination_path = os.path.dirname(os.path.realpath(__file__)) + r'\\'
 
 files_to_delete = [
     'HallsOfTorment.exe',
     'HallsOfTorment.pck',
     'steam_api64.dll',
     'steam_appid.txt',
+    'settings.json',
     'HoT-CatModLoader.exe',
-    'settings.json'
 ]
 
 for file_name in files_to_delete:
     file_path = os.path.join(destination_path, file_name)
-
     try:
-        # Delete the file in the destination folder
+        if file_name == 'HoT-CatModLoader.exe':
+            print(f'Delete ["{file_name}"]')
+            user_input = input(f'\n[Y/N]: ')
+            if user_input == 'y' or user_input == 'Y':
+                try:
+                    os.remove(file_path)
+                except Exception as error:
+                    print(str(error))
+            else:
+                exit()
         os.remove(file_path)
         print(f"File '{file_name}' deleted successfully.")
     except FileNotFoundError:
