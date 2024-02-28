@@ -14,9 +14,13 @@ func _ready():
 	
 func _process(delta):
 	input_timer += delta
-	if Input.is_key_pressed(KEY_X):
+	if Input.is_key_pressed(KEY_Q):
 		get_tree().quit()
-	if Input.is_action_just_pressed("DebugMenu") and not input_on_cooldown(0.5):
+		
+	if Input.is_key_pressed(KEY_2):
+		pass
+		
+	if Input.is_key_pressed(KEY_QUOTELEFT) and not input_on_cooldown(0.5):
 		var current_game_state = CatModLoader.get_current_game_state_id()
 		if current_game_state == GameState.States.InGame:
 			CatModLoader.set_game_state(GameState.States.Debug)
@@ -50,3 +54,55 @@ func _process(delta):
 				CatModLoader.cat_log('Equipping new item! ', item)
 				Global.ItemsPool.equip_item(new_item, CatModLoader.get_player())
 		reset_cooldown()
+
+	if Input.is_key_pressed(KEY_F5) and not input_on_cooldown(1):
+		#CatModLoader.reset_player_health()
+		var weapons : Array = [12, 606, 1001]
+		for weapon in weapons:
+			var new_item = Global.ItemsPool.find_item_with_weapon_index(weapon)
+			CatModLoader.cat_log('Equip New Weapon', new_item)
+			CatModLoader.cat_log('Equipped Items', Global.ItemsPool.EquippedItems)
+			if new_item:
+				CatModLoader.cat_log('Equipping new item! ', weapon)
+				Global.ItemsPool.equip_item(new_item, CatModLoader.get_player())
+		reset_cooldown()
+		
+	if Input.is_key_pressed(KEY_4) and not input_on_cooldown(1):
+		reset_cooldown()
+		var trait_levels = ['I', 'II', 'III', 'IV', 'V']
+		var trait_extras = [' (fast)', ' (weak)', ' (strong)', ' (Regeneration)', ' (Speed)', ' (Quickdraw)', ' (Pierce)', ' (Agility)', ' (Pinpoint)', ' (Charging)']
+		var traits = ['Strength ', 'Cunning Technique ', 'Metabolism ', 'Quick Hands ', 'Channeling ', 'Collateral Damage ', 'Vitality', 'Vanguard', 'Ruthlessness', 'Swift Feet ', 'Thick Hide ', 'Parry ', 'Dedication ', 'Arcane Splinter ', 'Proficient Stance ', 'Weapon Proficiency ']
+		for level in trait_levels:
+			for t in traits:
+				var new_trait = Global.World.TraitPool.get_trait_with_name(t + level)
+				if new_trait:
+					new_trait.acquire_trait(CatModLoader.get_player())
+					for extra in trait_extras:
+						new_trait = Global.World.TraitPool.get_trait_with_name(t + level + extra)
+						if new_trait:
+							new_trait.acquire_trait(CatModLoader.get_player())
+		#Global.World.TraitPool.trait_changed_state(traits, 2)
+		
+	if Input.is_key_pressed(KEY_3) and not input_on_cooldown(0.1):
+		reset_cooldown()
+		for item in Global.World.Pickups.items:
+			CatModLoader.cat_log('pickup', item)
+			var pickup = item.instantiate()
+			CatModLoader.cat_log('pickup', pickup)
+		#var pickup_scene = Global.World.Pickups.pick_item()
+		#CatModLoader.cat_log('pickup_scene', pickup_scene)
+		#var pickup = pickup_scene.instantiate()
+
+			#CatModLoader.cat_log('pickup', Global.World.Pickups.items)
+			var pos = CatModLoader.get_player_pos()
+			#pos.x += 150
+			pos = Global.World.OffscreenPositioner.get_nearest_valid_position(pos)
+			CatModLoader.cat_log('pickup pos', pos)
+			pickup.global_position = pos
+			Global.attach_toWorld(pickup)
+			
+	if Input.is_key_pressed(KEY_2) and not input_on_cooldown(0.1):
+		reset_cooldown()
+		#var menu = GlobalMenus.hud
+		#CatModLoader.cat_debug('', '', menu)
+		#menu.onGoldChanged(1000)

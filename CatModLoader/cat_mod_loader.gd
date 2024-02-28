@@ -49,6 +49,9 @@ func on_cooldown() -> bool:
 func reset_cooldown():
 	input_timer = 0.0
 	
+func get_world():
+	return Global.World
+	
 func get_current_scene():
 	return GameState.CurrentScene
 	
@@ -97,6 +100,13 @@ func set_player_pos(x, y):
 		current_pos.x = x
 		current_pos.y = y
 		set_pos.set_worldPosition(current_pos)
+
+func reset_player_health():
+	var playerHealthComp = CatModLoader.get_player().getChildNodeWithMethod("resetToMaxHealth")
+	if playerHealthComp != null:
+		cat_log('Resetting Player Health!')
+		playerHealthComp.resetToMaxHealth()
+		playerHealthComp.force_health_update_signals()
 	
 func collect_all_xp():
 	cat_log("Collecting All XP!")
@@ -108,7 +118,6 @@ func collect_all_xp():
 func toggle_autoplayer(value: bool):
 	ProjectSettings.set_setting("halls_of_torment/development/enable_autoplayer", value)
 	var setting = ProjectSettings.get_setting("halls_of_torment/development/enable_autoplayer")
-	print('ENABLE_AUTOPLAYER: ', setting)
 
 func cat_log(text, extra=null):
 	var mod = "[CatModLoader]: "
@@ -123,13 +132,19 @@ func cat_log(text, extra=null):
 			print(mod + str(extra))
 	print("")
 	
+func cat_debug(script, function, value=null):
+	var mod = "[CatModLoader]: "
+	if value != null:
+		print(mod + ' | [' + script + '] | [' + function + '] | ' + str(value))
+	else:
+		print(mod + ' | [' + script + '] | ')
+	
 func print_mod_controls():
 	cat_log('[1] - Prints CatModLoader Log')
 	
 func _ready():
 	if mods_loaded == false:
 		get_all_mods()
-		toggle_autoplayer(false)
 		print_loader_text()
 	
 func _process(delta):
@@ -137,7 +152,7 @@ func _process(delta):
 		if mods_loaded == false:
 			print_mod_controls()
 		mods_loaded = true
-		#set_game_state(GameState.States.RegisterOfHalls)
+		set_game_state(GameState.States.RegisterOfHalls)
 	if mods_loaded == true:
 		input_timer += delta
 		if Input.is_key_pressed(KEY_1) and not on_cooldown():

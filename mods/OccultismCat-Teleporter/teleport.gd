@@ -35,31 +35,32 @@ func _process(delta):
 	cords_cooldown += delta
 	auto_tp_cooldown += delta
 	
-	if Input.is_key_pressed(KEY_Z) and not on_cooldown(0.4):
+	# Auto Teleport #
+	if Input.is_key_pressed(KEY_T) and Input.is_key_pressed(KEY_CTRL) and not on_cooldown(0.4):
 		if auto_teleport == false:
 			auto_teleport = true
 		elif auto_teleport == true:
 			auto_teleport = false
 		print(auto_teleport)
 		cooldown = 0.0
-	# Auto Teleport #
 	if auto_teleport == true and not auto_teleport_cooldown(0.5):
 		teleport_to()
 		auto_tp_cooldown = 0.0
 	# Save Current POS #
-	if Input.is_key_pressed(KEY_F2) and not on_cords_cooldown(1):
+	if Input.is_key_pressed(KEY_T) and Input.is_key_pressed(KEY_SHIFT) and not on_cords_cooldown(0.5):
 		add_current_pos()
 		cords_cooldown = 0.0
 	# Go to saved POS #
-	if Input.is_key_pressed(KEY_F1) and not on_cooldown(1):
+	if Input.is_key_pressed(KEY_T) and not Input.is_key_pressed(KEY_SHIFT) and not Input.is_key_pressed(KEY_ALT) and not on_cooldown(0.5):
 		teleport_to(0, 0)
 		cooldown = 0.0
 	#if Input.is_key_pressed(KEY_F3):
 	#	var player = CatModLoader.get_player()
 	#	if Global.is_world_ready() and player != null:
 	#		CatModLoader.set_player_pos(4, 4)
-	if Input.is_key_pressed(KEY_F4):
+	if Input.is_key_pressed(KEY_T) and Input.is_key_pressed(KEY_ALT) and not on_cooldown(0.2):
 		var player = CatModLoader.get_player()
 		if Global.is_world_ready() and player != null:
 			var pos = CatModLoader.get_player_pos()
 			print(pos)
+		cooldown = 0.0
