@@ -10,7 +10,7 @@ func reset_cooldown():
 
 func _ready():
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	CatModLoader.toggle_autoplayer(true)
+	CatModLoader.toggle_autoplayer(false)
 	
 func _process(delta):
 	input_timer += delta
@@ -57,11 +57,10 @@ func _process(delta):
 
 	if Input.is_key_pressed(KEY_F5) and not input_on_cooldown(1):
 		#CatModLoader.reset_player_health()
-		var weapons : Array = [12, 606, 1001]
+		var weapons : Array = [606]
 		for weapon in weapons:
 			var new_item = Global.ItemsPool.find_item_with_weapon_index(weapon)
 			CatModLoader.cat_log('Equip New Weapon', new_item)
-			CatModLoader.cat_log('Equipped Items', Global.ItemsPool.EquippedItems)
 			if new_item:
 				CatModLoader.cat_log('Equipping new item! ', weapon)
 				Global.ItemsPool.equip_item(new_item, CatModLoader.get_player())
@@ -101,8 +100,25 @@ func _process(delta):
 			pickup.global_position = pos
 			Global.attach_toWorld(pickup)
 			
-	if Input.is_key_pressed(KEY_2) and not input_on_cooldown(0.1):
+	if Input.is_key_pressed(KEY_2) and not Input.is_key_pressed(KEY_SHIFT) and not input_on_cooldown(0.1):
 		reset_cooldown()
+		var current_level = Global.World.Level
+		CatModLoader.cat_log('', current_level)
+		var new_level = Global.World.getLevelUpExperience(current_level + 1)
+		CatModLoader.cat_log('', new_level)
+		Global.World.addExperience(new_level, false)
+		#Global.World.emit_signal("ExperienceThresholdReached")
+		#Global.World.addExperience(9999999, false)
+		CatModLoader.cat_log('', XPGemPool)
+		CatModLoader.cat_log('', XPGemPoolItem)
+		#var gem = GemPool.get_biggest_smaller_than_target(10.0)
+		#var gem = XPGemPool.get_biggest_smaller_than_target(10.0) #Global.SpawnXpOnDeath.GemPool.get_biggest_smaller_than_target(10)
 		#var menu = GlobalMenus.hud
 		#CatModLoader.cat_debug('', '', menu)
 		#menu.onGoldChanged(1000)
+		
+	if Input.is_key_pressed(KEY_2) and Input.is_key_pressed(KEY_SHIFT) and not input_on_cooldown(0.1):
+		reset_cooldown()
+		var current_gold = Global.World.Gold
+		CatModLoader.cat_log('', current_gold)
+		Global.World.addGold(10000)

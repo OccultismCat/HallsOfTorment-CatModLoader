@@ -2,8 +2,6 @@ import os, sys, time, json, psutil, threading
 from colorama import Fore, init
 init()
 
-args = [None, None]
-
 current_path = os.path.dirname(os.path.realpath(__file__)) + '\\'
 
 version = '0.0.1'
@@ -114,30 +112,61 @@ def splash_screen():
     set_console_size(90, 10)
     os.system('mode con: cols=90 lines=10')
 
-def get_arg(index):
-    arg = None
-    if not index:
+## Launcher Settings Functions ##
+def get_launcher_setting(search):
+    if not search:
+        return
+    settings = load_settings()
+    try:
+        return settings['launcher_settings'][search]
+    except Exception as error:
+        log(error, 'e')
+
+def set_launcher_setting(setting, value):
+    settings = load_settings()
+    if not settings:
         return
     try:
-        arg = sys.argv[index]
-    except:
-        pass
-    return arg
+        settings['launcher_settings'][setting] = value
+    except Exception as error:
+        log(error, 'e')
+    save_settings(settings)
 
-def get_args():
-    global args
-    args[0] = get_arg(1)
-    args[1] = get_arg(2)
+def toggle_launcher_setting(setting):
+    settings = load_settings()
+    if not setting:
+        return
+    try:
+        setting_value = settings['launcher_settings'][setting]
+    except Exception as error:
+        log(error, 'e')
+    if setting_value == False:
+        set_launcher_setting(setting, True)
+    elif setting_value == True:
+        set_launcher_setting(setting, False)
 
+## Game Settings Functions ##
+def get_game_setting(search):
+    if not search:
+        return
+    settings = load_settings()
+    try:
+        return settings['game_settings'][search]
+    except Exception as error:
+        log(error, 'e')
+
+## Settings Functions ##
 def create_settings():
     settings_data = {
         "launcher_settings": {
-            "arg1": "",
-            "arg2": "",
             "autostart_enabled": False,
             "autostart_timer": 2,
             "autostart": 0
         },
+        'game_settings': {
+            'verbose': False,
+            'debug': False
+        }
     }
     with open('settings.json', 'w') as file:
         json.dump(settings_data, file, indent=4)
@@ -148,39 +177,7 @@ def save_settings(settings):
     with open('settings.json', 'w+') as file:
         json.dump(settings, file, indent=4)
 
-def get_launcher_setting(search):
-    if not search:
-        return
-    settings = load_launch_settings()
-    try:
-        return settings['launcher_settings'][search]
-    except Exception as error:
-        log(error, 'error')
-
-def set_launcher_setting(setting, value):
-    settings = load_launch_settings()
-    if not settings:
-        return
-    try:
-        settings['launcher_settings'][setting] = value
-    except Exception as error:
-        log(error, 'error')
-    save_settings(settings)
-
-def toggle_launcher_setting(setting):
-    settings = load_launch_settings()
-    if not setting:
-        return
-    try:
-        setting_value = settings['launcher_settings'][setting]
-    except Exception as error:
-        log(error, 'error')
-    if setting_value == False:
-        set_launcher_setting(setting, True)
-    elif setting_value == True:
-        set_launcher_setting(setting, False)
-
-def load_launch_settings():
+def load_settings():
     if not os.path.exists('settings.json'):
         create_settings()
     try:
@@ -188,8 +185,9 @@ def load_launch_settings():
             settings = json.load(file)
             return settings
     except Exception as error:
-        log(error, 'error')
+        log(error, 'e')
 
+## Pack File Functions ##
 def get_pack_file(search=None):
     if search:
         for file in pack_files:
@@ -226,6 +224,10 @@ def create_launch_game_command(pack_file):
     exe = get_pack_file_option(pack_file, 'exe')
     if exe:
         commands.append(exe)
+    if get_game_setting('verbose') == True:
+        commands.append('--verbose')
+    if get_game_setting('debug') == True:
+        commands.append('--debug')
     pack = get_pack_file_option(pack_file, 'file')
     if pack:
         commands.append('--main-pack')
@@ -256,7 +258,7 @@ def get_game_processes():
                     if child['name'] == 'HallsOfTorment.exe':
                         return process_children
     except Exception as error:
-        log(error, 'error')
+        log(error, 'e')
 
 def get_child_processes(parent_pid):
     child_processes = []
@@ -275,7 +277,7 @@ def exit_processes(processes):
         try:
             psutil.Process(process['pid']).terminate()
         except Exception as error:
-            pass #log(error, 'error')
+            pass #log(error, 'e')
 
 def watch_game():
     processes = None
@@ -297,7 +299,7 @@ def watch_game_thread():
         thread = threading.Thread(target=watch_game)
         thread.start()
     except Exception as error:
-        pass #log(error, 'error')
+        pass #log(error, 'e')
 
 def is_running(process_name):
     for process in psutil.process_iter(['pid', 'name']):
@@ -307,7 +309,7 @@ def is_running(process_name):
 
 def launch_game(commands):
     if not os.path.exists(commands[3]):
-        log(f"Couldn't find {commands[3]}!", 'error')
+        log(f"Couldn't find {commands[3]}!", 'e')
         time.sleep(3)
         return
     try:
@@ -345,7 +347,7 @@ def menu_start_auto(options):
     try:
         options[get_launcher_setting('autostart')][1](options[get_launcher_setting('autostart')][2])
     except Exception as error:
-        log(error, 'error')
+        log(error, 'e')
     while True:
         if is_running('HallsOfTorment.exe'):
             time.sleep(0.01)

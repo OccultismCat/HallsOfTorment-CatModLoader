@@ -151,8 +151,8 @@ func _process(delta):
 	if GameState.CurrentState == GameState.States.Overworld and get_current_scene() != null:
 		if mods_loaded == false:
 			print_mod_controls()
+			#set_game_state(GameState.States.RegisterOfHalls)
 		mods_loaded = true
-		set_game_state(GameState.States.RegisterOfHalls)
 	if mods_loaded == true:
 		input_timer += delta
 		if Input.is_key_pressed(KEY_1) and not on_cooldown():
