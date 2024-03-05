@@ -254,7 +254,6 @@ func _ready():
 		print_loader_text()
 	
 func _process(delta):
-	input_timer += delta
 	if GameState.CurrentState == GameState.States.Overworld and get_current_scene() != null:
 		if mods_loaded == false:
 			print_mod_controls()
@@ -263,7 +262,7 @@ func _process(delta):
 		mods_loaded = true
 	if mods_loaded == true:
 		input_timer += delta
-		if Input.is_key_pressed(KEY_1) and not on_cooldown(1):
+		if Input.is_key_pressed(KEY_1) and not Input.is_key_pressed(KEY_SHIFT) and not on_cooldown(1):
 			reset_cooldown()
 			print_loader_text()
 		## Quick Exit ##
