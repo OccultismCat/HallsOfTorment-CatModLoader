@@ -1,5 +1,8 @@
 extends Control
 
+var mod = 'CatModLoader'
+var ver = '0.1.0'
+
 var logs : Array
 var mods_folder := OS.get_executable_path().get_base_dir() + "/mods/"
 var mods_dir := DirAccess.open(mods_folder)
@@ -23,11 +26,14 @@ func get_all_mods():
 	if not mods_dir:
 		DirAccess.make_dir_absolute(mods_folder)
 	
-func load_mod(mod_path):
-	var mod_script = ResourceLoader.load(mod_path)
+func load_mod(path, file):
+	var mod_script = await ResourceLoader.load(path + '/' + file)
 	if mod_script:
-		logs.append("Mod Loaded: " + mod_path)
-		add_child(mod_script.new())
+		var mod_script_instance = mod_script.new()
+		add_child(mod_script_instance)
+		cat_mod(mod_script_instance.mod, 'Found & Loaded Mod', 'Version', mod_script_instance.ver)
+		logs.append('[CatModLoader] | ')
+		logs.append("[CatModLoader] | Found & Loaded Mod: " + file.to_upper())
 			
 func load_mods_from_folder(path):
 	var inner_mod_folder = DirAccess.open(path)
@@ -35,7 +41,7 @@ func load_mods_from_folder(path):
 		inner_mod_folder.list_dir_begin()
 		var file = inner_mod_folder.get_next()
 		while file != "":
-			load_mod(path + '/' + file)
+			load_mod(path, file)
 			file = inner_mod_folder.get_next()
 	
 func print_loader_text():
@@ -185,7 +191,7 @@ func spawn_object():
 func spawn_fx():
 	pass
 
-func spawn(item, global_pos=false, valid=true):
+func spawn(item, global_pos=false, valid=true, player_position=false):
 	var spawn_item = ResourceLoaderQueue.getCachedResource(item)
 	await ResourceLoaderQueue.waitForLoadingFinished()
 	var pos = Vector2.ZERO
@@ -195,6 +201,10 @@ func spawn(item, global_pos=false, valid=true):
 		pos.y = player_pos.y
 	else:
 		pos += Vector2(randf_range(0, 0), randf_range(0, 0))
+	if player_position == true:
+		var player_pos = CatModLoader.get_player_pos()
+		pos.x = player_pos.x
+		pos.y = player_pos.y
 	if valid == true:
 		pos = Global.World.OffscreenPositioner.get_nearest_valid_position(pos)
 	var spawned = spawn_item.instantiate()
@@ -209,7 +219,6 @@ func toggle_autoplayer(value: bool):
 
 func quick_play():
 	Global.WorldsPool.enterWorld(4, false)
-
 
 func cat_log(text, extra=null):
 	var mod = "[CatModLoader] | "
@@ -249,7 +258,7 @@ func print_mod_controls():
 
 func _ready():
 	if mods_loaded == false:
-		toggle_autoplayer(false)
+		toggle_autoplayer(true)
 		get_all_mods()
 		print_loader_text()
 	
@@ -257,7 +266,7 @@ func _process(delta):
 	if GameState.CurrentState == GameState.States.Overworld and get_current_scene() != null:
 		if mods_loaded == false:
 			print_mod_controls()
-			#quick_play()
+			quick_play()
 			#set_game_state(GameState.States.RegisterOfHalls)
 		mods_loaded = true
 	if mods_loaded == true:

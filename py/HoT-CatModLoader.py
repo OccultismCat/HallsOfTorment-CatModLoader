@@ -2,6 +2,9 @@ import os, sys, time, json, psutil, threading, subprocess
 from colorama import Fore, init
 init()
 
+game_log = f"{os.getenv('APPDATA')}\\HallsOfTorment\\logs\\godot.log"
+game_logs = []
+
 current_path = os.path.dirname(os.path.realpath(__file__)) + '\\'
 
 version = '0.1.1'
@@ -29,7 +32,6 @@ def get_current_path():
 def get_path(path):
     if path:
         return f"{path}".replace('\\', '\\\\')
-
 
 def splash():
     return '''=========+=+**++#*==========================++#%%%*+
@@ -94,6 +96,9 @@ def log(text, type=None, var=None, newline=False, color=None):
         print(log_start + Fore.RED + '[ERROR] | ' + str(text) + '\n' + Fore.RESET)
     elif type == 'debug' or type == 'd':
         print(log_start + Fore.MAGENTA + '[DEBUG] ' + Fore.LIGHTCYAN_EX + str(text) + '\n' + Fore.RESET)
+    elif type == 'mod' or type == 'm':
+        print_text = ''
+        print(f"{log_start}" + Fore.LIGHTGREEN_EX + "[MOD] " + Fore.LIGHTWHITE_EX + str(text) + Fore.RESET)
     else:
         print(log_start + Fore.LIGHTWHITE_EX + str(text) + Fore.RESET)
 
@@ -108,7 +113,8 @@ def clear():
 
 def set_console_size(cols, lines):
     try:
-        os.system(f'mode con: cols={cols} lines={lines}')
+        pass
+        #os.system(f'mode con: cols={cols} lines={lines}')
     except Exception as error:
         print(str(error))
 
@@ -315,13 +321,42 @@ def exit_processes(processes):
         except Exception as error:
             pass #log(error, 'e')
 
+def clear_log():
+    global game_logs
+    game_logs = []
+    with open(game_log, 'w+') as file:
+        file.write('')
+
+def get_log(file_size):
+    with open(game_log, 'r') as file:
+        file.seek(file_size)
+        new_lines = file.readlines()
+        for line in new_lines:
+            if "[CatModLoader]" in line:
+                log(line.strip().replace('[CatModLoader] | ', ''), 'mod')
+                game_logs.append(line.strip())
+            elif "SCRIPT ERROR:" in line:
+                log(line.strip(), 'e')
+            elif "could not be loaded!" in line:
+                log(line.strip(), 'e')
+
+
 def watch_game():
+    global game_logs
+    clear_log()
+    file_size = 0
     processes = None
+    log('[Launch Game]', 'title', newline=True)
     while True:
         if is_running('HallsOfTorment.exe'):
             if not processes or processes == []:
                 processes = get_game_processes()
-            time.sleep(0.01)
+            current_size = os.path.getsize(game_log)
+            if current_size > file_size:
+                get_log(file_size)
+                file_size = current_size
+                
+            time.sleep(0.1)
         else:
             exit_processes(processes)
             break

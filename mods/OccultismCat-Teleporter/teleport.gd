@@ -1,5 +1,8 @@
 extends Control
 
+var mod = 'Teleporter'
+var ver = '0.0.1'
+
 var cooldown = 0.0
 var cords_cooldown = 0.0
 var selected_cords = 0

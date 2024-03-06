@@ -54,15 +54,15 @@ func set_difficulty(diff):
 
 func create_random_wave():
     var bosses = []
-    var wave_length = CatModLoader.get_random_number(10, 20)
-    var wave_spawn_timer = CatModLoader.get_random_number(5, 10)
+    var wave_length = CatModLoader.get_random_number(20, 120)
+    var wave_spawn_timer = CatModLoader.get_random_number(5, 30)
     var boss_1 = CatModLoader.get_boss()
     var boss_2 = CatModLoader.get_boss()
     var boss_3 = CatModLoader.get_boss()
     var boss_4 = CatModLoader.get_boss()
     var boss_5 = CatModLoader.get_boss()
     if current_difficulty == 'easy':
-        bosses = [boss_1]
+        bosses = [boss_1, boss_2]
     elif current_difficulty == 'insane':
         bosses = [boss_1, boss_2, boss_3, boss_4, boss_5]
     var wave = [wave_length, wave_spawn_timer, bosses]
@@ -92,7 +92,6 @@ func reset():
     bosses_spawned = 0
 
 func _ready():
-    CatModLoader.cat_mod(mod, 'Mod has been loaded!', 'Current Version', ver)
     create_random_wave()
 
 func _process(_delta):
@@ -122,7 +121,7 @@ func _process(_delta):
 
     if Input.is_key_pressed(KEY_TAB) and Input.is_key_pressed(KEY_CTRL) and not input_on_cooldown(0.5):
         var fx = await CatModLoader.spawn("res://GameElements/Summons/HoundSummon.tscn", true, false)
-        var summon = await CatModLoader.spawn("res://GameElements/Town_Portal.tscn", true, false)
+        #var summon = await CatModLoader.spawn("res://GameElements/Town_Portal.tscn", true, false)
         var test = await CatModLoader.spawn("res://GameElements/TestSummon.tscn", true, false)
         if fx:
             CatModLoader.cat_mod(mod, 'Spawn FX', fx)
@@ -136,7 +135,7 @@ func _process(_delta):
         spawner += _delta
         wave_timer += _delta
         if not fx_timer < 0.25:
-            var fx = await CatModLoader.spawn("res://FX/ground_hit/ground_hit_purple.tscn", true, false) # "res://FX/area_telegraph/area_telegraph.tscn" "res://FX/hound/hound_attack.tscn"
+            var fx = await CatModLoader.spawn("res://FX/ground_hit/ground_hit_purple.tscn", false, false, true) # "res://FX/area_telegraph/area_telegraph.tscn" "res://FX/hound/hound_attack.tscn"
             if fx:
                 fxs.append(fx)
                 #CatModLoader.cat_log('FXS', fxs)
@@ -151,7 +150,7 @@ func _process(_delta):
         if not timer < 1:
             var hud = GlobalMenus.hud
             if hud:
-                CatModLoader.cat_mod(mod, 'HUD', hud)
+                # Temp will be doing custom text soon
                 hud.get_node(hud.GoldLabel).text = str('Wave: ' + str(waves.size() - 1))
             if wave_timer >= waves[current_wave][0]:
                 CatModLoader.cat_mod(mod, 'Wave Timer', wave_timer)
@@ -162,8 +161,8 @@ func _process(_delta):
                     CatModLoader.cat_mod(mod, 'Wave Survived: XP Earned', get_xp_reward())
                     CatModLoader.add_player_xp(get_xp_reward(), false)
                     CatModLoader.collect_all_xp()
-                    await CatModLoader.spawn("res://FX/twinkle_flash.tscn")
-                    await CatModLoader.spawn("res://FX/revive/revive_effect.tscn")
+                    await CatModLoader.spawn("res://FX/twinkle_flash.tscn", false, false, true)
+                    await CatModLoader.spawn("res://FX/revive/revive_effect.tscn", false, false, true)
                 create_random_wave()
                 current_wave += 1
                 wave_timer = 0.0
@@ -172,7 +171,7 @@ func _process(_delta):
                 var boss = waves[current_wave][2].pick_random()
                 #var random_boss = CatModLoader.get_boss()
                 CatModLoader.cat_mod(mod, 'Boss', boss)
-                var spawned_boss = await CatModLoader.spawn(boss, false, true)
+                var spawned_boss = await CatModLoader.spawn(boss, false, true, false)
                 if is_instance_valid(spawned_boss):
                     CatModLoader.cat_mod(mod, 'Spawned Boss', spawned_boss)
                 spawner = 0.0

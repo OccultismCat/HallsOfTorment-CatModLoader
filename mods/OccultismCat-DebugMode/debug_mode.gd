@@ -1,5 +1,8 @@
 extends Node2D
 
+var mod = 'Debug Mode'
+var ver = '0.0.1'
+
 var input_timer = 0.0
 
 var loop_toggle = false
