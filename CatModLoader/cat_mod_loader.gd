@@ -258,7 +258,7 @@ func print_mod_controls():
 
 func _ready():
 	if mods_loaded == false:
-		toggle_autoplayer(true)
+		toggle_autoplayer(false)
 		get_all_mods()
 		print_loader_text()
 	
@@ -266,7 +266,7 @@ func _process(delta):
 	if GameState.CurrentState == GameState.States.Overworld and get_current_scene() != null:
 		if mods_loaded == false:
 			print_mod_controls()
-			quick_play()
+			#quick_play()
 			#set_game_state(GameState.States.RegisterOfHalls)
 		mods_loaded = true
 	if mods_loaded == true:
