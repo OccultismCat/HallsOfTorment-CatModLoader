@@ -1,7 +1,7 @@
 extends Control
 
 var mod = 'CatModLoader'
-var ver = '0.1.0'
+var ver = '0.1.1'
 
 var logs : Array
 var mods_folder := OS.get_executable_path().get_base_dir() + "/mods/"

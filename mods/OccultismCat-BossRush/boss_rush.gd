@@ -1,7 +1,7 @@
 extends Control
 
 var mod = 'Boss Rush'
-var ver = '0.0.1'
+var ver = '0.0.2'
 
 var fxs = []
 var fx_timer = 0.0
