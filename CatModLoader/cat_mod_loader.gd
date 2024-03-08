@@ -32,8 +32,7 @@ func load_mod(path, file):
 		var mod_script_instance = mod_script.new()
 		add_child(mod_script_instance)
 		cat_mod(mod_script_instance.mod, 'Found & Loaded Mod', 'Version', mod_script_instance.ver)
-		logs.append('[CatModLoader] | ')
-		logs.append("[CatModLoader] | Found & Loaded Mod: " + file.to_upper())
+		logs.append(file.to_upper())
 			
 func load_mods_from_folder(path):
 	var inner_mod_folder = DirAccess.open(path)
@@ -57,6 +56,7 @@ func on_cooldown(seconds) -> bool:
 func reset_cooldown():
 	input_timer = 0.0
 	
+## Modding Functions ##
 func get_world():
 	return Global.World
 	
@@ -268,14 +268,14 @@ func cat_mod(script, function, value=null, data=null):
 	print(print_text)
 
 func print_mod_controls():
-	cat_log('[1] - Prints CatModLoader Log')
+	cat_mod('Controls', "Key] [1] = Print Log")
+	cat_mod('Controls', "Key] [Shift + 1] = Quick Play")
 
 
 func _ready():
 	if mods_loaded == false:
-		toggle_autoplayer(false)
+		#toggle_autoplayer(true)
 		get_all_mods()
-		print_loader_text()
 	
 func _process(delta):
 	if GameState.CurrentState == GameState.States.Overworld and get_current_scene() != null:

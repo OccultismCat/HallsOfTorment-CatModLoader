@@ -78,7 +78,7 @@ def log(text, type=None, var=None, newline=False, color=None, step=None):
     elif type == 'setup' or type == 's':
         print_text = log_start + Fore.LIGHTGREEN_EX + '[SETUP] | ' + Fore.RESET
         if step != None:
-            print_text += Fore.LIGHTGREEN_EX + f'[STEP] [{step}] | ' + Fore.RESET
+            print_text += Fore.LIGHTGREEN_EX + f'[STEP]: {step}. | ' + Fore.RESET
         print_text += str(text)
         print(print_text)
     elif type == 'text':
@@ -137,16 +137,6 @@ def create_settings():
     settings_data = {
         "launcher_settings": {
             'paths': {
-                'logs': {
-                    'game': {
-                        'default': "",
-                        'custom': ""
-                    },
-                    'pck_explorer': {
-                        'default': "",
-                        'custom': ""
-                    }
-                },
                 'game': {
                     'default': "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Halls of Torment",
                     'custom': ''
@@ -166,14 +156,12 @@ def create_settings():
                 }
             },
             "autostart_enabled": False,
-            "autostart_timer": 3,
+            "autostart_timer": 2,
             "autostart": 0
         },
         'game_settings': {
             'verbose': False,
-            'debug': False,
-            'console': False,
-            'position': (0, 0)
+            'debug': False
         }
     }
     with open('settings.json', 'w') as file:
@@ -231,46 +219,28 @@ def get_launcher_setting(search, search_2=None, search_3=None, search_4=None):
         except Exception as error:
             log(error, 'e')
 
-#def set_launcher_setting(setting, value):
-def set_launcher_setting(value, setting, setting_2=None, setting_3=None, setting_4=None):
+def set_launcher_setting(setting, value):
     settings = load_settings()
     if not settings:
         return
-    if setting_4:
-        try:
-            settings['launcher_settings'][setting][setting_2][setting_3][setting_4] = value
-        except Exception as error:
-            log(error, 'e')
-    elif setting_3:
-        try:
-            settings['launcher_settings'][setting][setting_2][setting_3] = value
-        except Exception as error:
-            log(error, 'e')
-    elif setting_2:
-        try:
-            settings['launcher_settings'][setting][setting_2]
-        except Exception as error:
-            log(error, 'e')
-    elif setting:
-        try:
-            settings['launcher_settings'][setting] = value
-        except Exception as error:
-            log(error, 'e')
+    try:
+        settings['launcher_settings'][setting] = value
+    except Exception as error:
+        log(error, 'e')
     save_settings(settings)
-    
+
 def toggle_launcher_setting(setting):
-    #settings = load_settings()
+    settings = load_settings()
     if not setting:
         return
     try:
-        value = get_launcher_setting(setting)
-        #setting_value = settings['launcher_settings'][setting]
+        setting_value = settings['launcher_settings'][setting]
     except Exception as error:
         log(error, 'e')
-    if value == False:
-        set_launcher_setting(True, setting)
-    elif value == True:
-        set_launcher_setting(False, setting)
+    if setting_value == False:
+        set_launcher_setting(setting, True)
+    elif setting_value == True:
+        set_launcher_setting(setting, False)
 
 ## Pack File Functions ##
 def get_pack_file(search=None):
@@ -303,14 +273,9 @@ def get_pack_file_option(search, option_search):
     wait()
 
 def create_launch_game_command(pack_file):
-    cmd = ''
-    cmd_arg = ''
     if not pack_file:
         return
-    if get_game_setting('console') == True:
-        cmd = 'cmd.exe'
-        cmd_arg = '/K'
-    commands = ['start', f'{cmd}', f'{cmd_arg}']
+    commands = ['start', 'cmd.exe', '/K']
     exe = get_pack_file_option(pack_file, 'exe')
     if exe:
         commands.append(exe)
@@ -318,12 +283,6 @@ def create_launch_game_command(pack_file):
         commands.append('--verbose')
     if get_game_setting('debug') == True:
         commands.append('--debug')
-    try:
-        pos = get_game_setting('position')
-        commands.append('--position')
-        commands.append(f'{pos[0]},{pos[1]}')
-    except Exception as error:
-        log(error, 'e')
     pack = get_pack_file_option(pack_file, 'file')
     if pack:
         commands.append('--main-pack')
@@ -381,6 +340,19 @@ def clear_log():
     with open(game_log, 'w+') as file:
         file.write('')
 
+def get_log(file_size):
+    with open(game_log, 'r') as file:
+        file.seek(file_size)
+        new_lines = file.readlines()
+        for line in new_lines:
+            if "[CatModLoader]" in line:
+                log(line.strip().replace('[CatModLoader] | ', ''), 'mod')
+                game_logs.append(line.strip())
+            elif "SCRIPT ERROR:" in line:
+                log(line.strip(), 'e')
+            elif "could not be loaded!" in line:
+                log(line.strip(), 'e')
+
 def watch_game():
     global game_logs
     clear_log()
@@ -393,7 +365,7 @@ def watch_game():
                 processes = get_game_processes()
             current_size = os.path.getsize(game_log)
             if current_size > file_size:
-                get_log(file_size, game_log)
+                get_log(file_size)
                 file_size = current_size
                 
             time.sleep(0.1)
@@ -441,19 +413,6 @@ def confirm(text):
         return True
     else:
         return False
-
-def get_log(file_size, log_path):
-    with open(log_path, 'r') as file:
-        file.seek(file_size)
-        new_lines = file.readlines()
-        for line in new_lines:
-            if "[catmodloader]" in line.lower():
-                log(line.strip().replace('[CatModLoader] | ', ''), 'mod')
-                game_logs.append(line.strip())
-            elif "SCRIPT ERROR:" in line:
-                log(line.strip(), 'e')
-            elif "could not be loaded!" in line:
-                log(line.strip(), 'e')
 
 ## Launch Settings Menu ## !Update to new menu method!
 def menu_launch_settings():
@@ -527,13 +486,10 @@ def setup_catmodloader():
         game_path = get_launcher_setting('paths', 'game', 'default')
         log('[Setup CatModLoader - Paths]', 'title')
         log(f'Set your game path.\n', 's', step='1')
-        log(f'[Default]', 's')
-        log(f'{get_path(game_path)}', 's')
+        log(f'[Default]', 's', step='1')
+        log(f'{get_path(game_path)}', 's', step='1')
         if not confirm('Use Default?: [Y/N]: '):
             user_input = input('\nEnter Path: ')
-            log(user_input.replace('\\', '\\\\'), 'd')
-            log(game_path)
-            wait()
         clear()
         game_extracted_path = get_launcher_setting('paths', 'game_extracted', 'default')
         log('[Setup CatModLoader - Paths]', 'title')
@@ -554,15 +510,14 @@ def menu_tools_n_setup():
     set_console_size(60, 15)
     options = {
         0: {
-            'text': Fore.CYAN + 'Setup CatModLoader' + Fore.RESET,
+            'text': 'Setup CatModLoader',
             'func': setup_catmodloader,
-            'color': Fore.CYAN,
             'newline': False
         },
         1: {
             'text': 'Extract Pack File',
             'func': extract_pack_file,
-            'newline' : True
+            'newline' : False
         },
         2: {
             'text': 'Create Pack File',
@@ -660,18 +615,12 @@ def menu_start():
             log(f'[{index + 1}] - {options[option]['text']}', 'menu', newline=options[option]['newline'])
         log('Go Back', type='menu-back', newline=True)
         # Get user input 
-        try:
-            user_input = input('\nOption: ')
-        except Exception as error:
-            log(error, 'e')
+        user_input = input('\nOption: ')
         if user_input == '0' or user_input == 'e' or user_input == 'E':
             return
         log(option, 'd')
-        # Set user_input to correct value
-        try:
-            user_input = int(user_input) - 1
-        except Exception as error:
-            return
+        # Set user_input to correct value 
+        user_input = int(user_input) - 1
         # Launch game
         try:
             options[user_input]['func'](options[user_input]['args'])
@@ -689,8 +638,10 @@ def menu_start():
 
 ## Start ##
 def start():
-    while True:
-        menu_start()
+    #setup_catmodloader()
+    #add_modloader_to_game()
+    #wait()
+    menu_start()
 
 splash_screen()
 start()

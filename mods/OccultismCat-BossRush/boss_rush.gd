@@ -67,11 +67,11 @@ func create_random_wave():
     if difficulty == 'easy':
         wave_min = 30
         wave_max = 120
-        spawn_rate_min = 5
-        spawn_rate_max = (wave_min - 5)
+        spawn_rate_min = 8
+        spawn_rate_max = 20
     elif difficulty == 'insane':
-        wave_min = 30
-        wave_max = 300
+        wave_min = 60
+        wave_max = 120
         spawn_rate_min = 5
         spawn_rate_max = 10
     var wave_length = CatModLoader.get_random_number(wave_min, wave_max)
@@ -79,12 +79,6 @@ func create_random_wave():
     var wave = [wave_length, wave_spawn_timer, bosses]
     if wave:
         waves.append(wave)
-
-func create_waves():
-    var wave_1 = [60, 20, [CatModLoader.get_boss()]]
-    var wave_2 = [180, 15, [CatModLoader.get_boss(), CatModLoader.get_boss(), CatModLoader.get_boss(), CatModLoader.get_boss()]]
-    var all_waves = [wave_1, wave_2]
-    waves = all_waves
 
 func get_wave(search):
     pass
