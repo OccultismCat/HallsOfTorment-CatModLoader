@@ -112,7 +112,6 @@ func set_player_pos(x, y):
 func reset_player_health():
 	var playerHealthComp = CatModLoader.get_player().getChildNodeWithMethod("resetToMaxHealth")
 	if playerHealthComp != null:
-		cat_log('Resetting Player Health!')
 		playerHealthComp.resetToMaxHealth()
 		playerHealthComp.force_health_update_signals()
 	
@@ -129,7 +128,6 @@ func set_player_xp(amount):
 	Global.World.addExperience(new_level)
 
 func collect_all_xp():
-	cat_log("Collecting All XP!")
 	var player = CatModLoader.get_player()
 	var collectAllXPNode = player.getChildNodeWithMethod("collectAllXP")
 	if collectAllXPNode != null:
@@ -160,11 +158,28 @@ func get_random_number(min=null, max=null):
 	var rand_num = nums.pick_random()
 	return rand_num
 
+func get_enemys():
+	var all_enemys : Array = []
+	var slimes = ['res://GameElements/Monsters/Slime_gold_small.tscn', 'res://GameElements/Monsters/Stage01/Slime_basic.tscn', 'res://GameElements/Monsters/Stage01/Slime_green.tscn', 'res://GameElements/Monsters/Stage02/Slime_magma_reactive.tscn', 'res://GameElements/Monsters/Stage02/Slime_magma.tscn', 'res://GameElements/Monsters/Stage02/Slime_magma_small.tscn', 'res://GameElements/Monsters/Stage02/Slime_magma_elite.tscn', 'res://GameElements/Monsters/Stage02/Slime_magma_elite2.tscn']
+	all_enemys.append_array(slimes)
+	var enemys : Array = all_enemys
+	return enemys
+
 func get_enemy():
+	var enemys = get_enemys()
 	var random_enemy = ''
-	var enemys = ["res://GameElements/Monsters/Slime_gold_small.tscn", 'res://GameElements/Monsters/Stage03/Possessed_Effigy.tscn', 'res://GameElements/Monsters/Stage01/Skeleton_lost_shield.tscn']
 	random_enemy = enemys.pick_random()
 	return random_enemy
+
+func get_random_enemys(amount):
+	if not amount:
+		return
+	var random_enemys : Array = []
+	var random_amount = get_random_number(1, amount)
+	while random_enemys.size() < random_amount:
+		var random_enemy = get_enemy()
+		random_enemys.append(random_enemy)
+	return random_enemys
 
 func get_boss():
 	var all_bosses = []
@@ -218,7 +233,7 @@ func toggle_autoplayer(value: bool):
 	var setting = ProjectSettings.get_setting("halls_of_torment/development/enable_autoplayer")
 
 func quick_play():
-	Global.WorldsPool.enterWorld(4, false)
+	Global.WorldsPool.enterWorld(3, false)
 
 func cat_log(text, extra=null):
 	var mod = "[CatModLoader] | "
@@ -258,7 +273,7 @@ func print_mod_controls():
 
 func _ready():
 	if mods_loaded == false:
-		toggle_autoplayer(false)
+		toggle_autoplayer(true)
 		get_all_mods()
 		print_loader_text()
 	
@@ -266,7 +281,7 @@ func _process(delta):
 	if GameState.CurrentState == GameState.States.Overworld and get_current_scene() != null:
 		if mods_loaded == false:
 			print_mod_controls()
-			#quick_play()
+			quick_play()
 			#set_game_state(GameState.States.RegisterOfHalls)
 		mods_loaded = true
 	if mods_loaded == true:

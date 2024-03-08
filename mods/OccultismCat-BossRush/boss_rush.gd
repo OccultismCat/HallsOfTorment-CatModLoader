@@ -6,9 +6,11 @@ var ver = '0.0.1'
 var fxs = []
 var fx_timer = 0.0
 
-var boss_rush = false
+var boss_rush = true
+var start = true
 var difficultys = ['easy', 'normal', 'hard', 'expert', 'pro', 'insane', 'random']
 var current_difficulty = difficultys[0]
+var player_level = 0
 var timer = 0.0
 var spawner = 0
 var wave_timer = 0.0
@@ -17,6 +19,9 @@ var waves = []
 var bosses = []
 var current_wave = 0
 var bosses_spawned = 0
+var max_boss_spawns = (2 * current_wave)
+
+var hud_timer = 0.0
 
 var input_timer = 0.0
 
@@ -53,18 +58,24 @@ func set_difficulty(diff):
         count += 1
 
 func create_random_wave():
+    var difficulty = get_difficulty()
     var bosses = []
-    var wave_length = CatModLoader.get_random_number(20, 120)
-    var wave_spawn_timer = CatModLoader.get_random_number(5, 30)
-    var boss_1 = CatModLoader.get_boss()
-    var boss_2 = CatModLoader.get_boss()
-    var boss_3 = CatModLoader.get_boss()
-    var boss_4 = CatModLoader.get_boss()
-    var boss_5 = CatModLoader.get_boss()
-    if current_difficulty == 'easy':
-        bosses = [boss_1, boss_2]
-    elif current_difficulty == 'insane':
-        bosses = [boss_1, boss_2, boss_3, boss_4, boss_5]
+    var wave_min = 0
+    var wave_max = 0
+    var spawn_rate_min = 0
+    var spawn_rate_max = 0
+    if difficulty == 'easy':
+        wave_min = 30
+        wave_max = 120
+        spawn_rate_min = 5
+        spawn_rate_max = (wave_min - 5)
+    elif difficulty == 'insane':
+        wave_min = 30
+        wave_max = 300
+        spawn_rate_min = 5
+        spawn_rate_max = 10
+    var wave_length = CatModLoader.get_random_number(wave_min, wave_max)
+    var wave_spawn_timer = CatModLoader.get_random_number(spawn_rate_min, spawn_rate_max)
     var wave = [wave_length, wave_spawn_timer, bosses]
     if wave:
         waves.append(wave)
@@ -82,17 +93,17 @@ func get_xp_reward():
     return (50 * CatModLoader.get_player_level() * bosses_spawned) / current_wave
 
 func reset():
-    boss_rush = false
-    timer = 0.0
-    spawner = 0
-    wave_timer = 0.0
-    total_spawner_time = 0.0
+    boss_rush = true
+    #timer = 0.0
+    #spawner = 0
+    #wave_timer = 0.0
+    #total_spawner_time = 0.0
     waves = []
-    current_wave = 0
-    bosses_spawned = 0
+    #current_wave = 0
+    #bosses_spawned = 0
 
 func _ready():
-    create_random_wave()
+    pass
 
 func _process(_delta):
     input_timer += _delta
@@ -100,34 +111,48 @@ func _process(_delta):
 
     if state == GameState.States.PlayerDied or state == GameState.States.PlayerSurvived:
         if boss_rush == true:
-            reset()
+            timer = 0.0
+            spawner = 0
+            wave_timer = 0.0
+            total_spawner_time = 0.0
+            waves = []
+            current_wave = 0
+            bosses_spawned = 0
 
     if state != GameState.States.InGame:
         return
 
-    if boss_rush == false:
-        CatModLoader.cat_mod(mod, '_process', 'Creating new random wave!', ver)
+    if start == true:
+        reset()
         create_random_wave()
-        boss_rush = true
-
+        start = false
+    
     if Input.is_key_pressed(KEY_TAB) and not Input.is_key_pressed(KEY_CTRL) and not input_on_cooldown(1):
-        CatModLoader.cat_mod(mod, 'Wave Timer', wave_timer)
-        CatModLoader.cat_mod(mod, 'Current Wave', len(waves))
-        CatModLoader.cat_mod(mod, 'Bosses Spawned', bosses_spawned)
-        CatModLoader.cat_mod(mod, 'Next XP Reward', get_xp_reward(), false)
-        CatModLoader.cat_mod(mod, 'Difficulty', current_difficulty)
-        CatModLoader.cat_mod(mod, 'Wave Info', waves[current_wave])
+        if boss_rush == false:
+            boss_rush = true
+        elif boss_rush == true:
+            boss_rush = false
+        CatModLoader.cat_mod(mod, 'Enabled', boss_rush)
         input_timer = 0.0
 
     if Input.is_key_pressed(KEY_TAB) and Input.is_key_pressed(KEY_CTRL) and not input_on_cooldown(0.5):
-        var fx = await CatModLoader.spawn("res://GameElements/Summons/HoundSummon.tscn", true, false)
+        #var fx = await CatModLoader.spawn("res://GameElements/Summons/HoundSummon.tscn", true, false)
         #var summon = await CatModLoader.spawn("res://GameElements/Town_Portal.tscn", true, false)
-        var test = await CatModLoader.spawn("res://GameElements/TestSummon.tscn", true, false)
-        if fx:
-            CatModLoader.cat_mod(mod, 'Spawn FX', fx)
-        #set_difficulty('insane')
+        #var test = await CatModLoader.spawn("res://GameElements/TestSummon.tscn", true, false)
+        #if fx:
+        #    CatModLoader.cat_mod(mod, 'Spawn FX', fx)
+        CatModLoader.cat_mod(mod, 'Difficulty Set', 'Insane')
+        set_difficulty('insane')
         input_timer = 0.0
 
+    if hud_timer < 0.01:
+        var hud = GlobalMenus.hud
+        if hud:
+            var spawn_timer = str(waves[current_wave][1] - int(spawner))
+            var waves_amount = str(waves.size())
+            var boss_rush_hud = "[W:" + waves_amount + '][S:' + spawn_timer + ']'
+            hud.get_node(hud.GoldLabel).text = boss_rush_hud
+        hud_timer = 0.0
 
     if boss_rush == true:
         timer += _delta
@@ -141,17 +166,13 @@ func _process(_delta):
                 #CatModLoader.cat_log('FXS', fxs)
                 #CatModLoader.cat_log('FX Node', fx)
                 #CatModLoader.cat_log('FX Node', len(fxs))
-                if fxs.size() > 5:
+                if fxs.size() >= 2 or fxs.size() > current_wave:
                     if is_instance_valid(fx):
                         fxs[0].queue_free()
                     fxs.remove_at(0)
                 #fx.queue_free()
             fx_timer = 0.0
         if not timer < 1:
-            var hud = GlobalMenus.hud
-            if hud:
-                # Temp will be doing custom text soon
-                hud.get_node(hud.GoldLabel).text = str('Wave: ' + str(waves.size() - 1))
             if wave_timer >= waves[current_wave][0]:
                 CatModLoader.cat_mod(mod, 'Wave Timer', wave_timer)
                 CatModLoader.cat_mod(mod, 'Current Wave', len(waves))
@@ -165,16 +186,33 @@ func _process(_delta):
                     await CatModLoader.spawn("res://FX/revive/revive_effect.tscn", false, false, true)
                 create_random_wave()
                 current_wave += 1
+                max_boss_spawns += 2
                 wave_timer = 0.0
             if spawner >= waves[current_wave][1]:
+                CatModLoader.cat_mod(mod, 'Wave Timer', wave_timer)
+                CatModLoader.cat_mod(mod, 'Current Wave', len(waves))
+                CatModLoader.cat_mod(mod, 'Bosses Spawned', bosses_spawned)
+                if bosses_spawned >= max_boss_spawns:
+                    player_level = CatModLoader.get_player_level()
+                    CatModLoader.cat_debug(mod, 'Level', player_level)
+                    if player_level >= bosses_spawned:
+                        CatModLoader.cat_mod(mod, 'Increasing Max Boss Spawns', max_boss_spawns + 1)
+                        max_boss_spawns += 1
+                if bosses_spawned < max_boss_spawns:
+                    var boss = CatModLoader.get_boss()
+                    var spawned_boss = await CatModLoader.spawn(boss, false, true, false)
+                    if is_instance_valid(spawned_boss):
+                        CatModLoader.cat_mod(mod, 'Spawned Boss', spawned_boss, spawned_boss.get('name'))
+                        bosses_spawned += 1
+                var enemys = CatModLoader.get_random_enemys(4)
+                for enemy in enemys:
+                    var spawned_enemy = await CatModLoader.spawn(enemy, false, true, false)
+                    if is_instance_valid(spawned_enemy):
+                        CatModLoader.cat_mod(mod, 'Spawned Enemy', spawned_enemy, spawned_enemy.get('name'))
+
                 CatModLoader.cat_mod(mod, 'Spawn Cooldown', waves[current_wave][1])
-                var boss = waves[current_wave][2].pick_random()
-                #var random_boss = CatModLoader.get_boss()
-                CatModLoader.cat_mod(mod, 'Boss', boss)
-                var spawned_boss = await CatModLoader.spawn(boss, false, true, false)
-                if is_instance_valid(spawned_boss):
-                    CatModLoader.cat_mod(mod, 'Spawned Boss', spawned_boss)
+                CatModLoader.cat_mod(mod, 'Spawned Bosses', str(bosses_spawned) + '/' + str(max_boss_spawns))
                 spawner = 0.0
-                bosses_spawned += 1
+                
             timer = 0.0
             wave_timer += 1
