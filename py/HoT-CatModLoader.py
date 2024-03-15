@@ -7,7 +7,7 @@ game_logs = []
 
 current_path = os.path.dirname(os.path.realpath(__file__)) + '\\'
 
-version = '0.1.2'
+version = '0.1.3'
 
 pack_files = {
     'default': {
@@ -83,6 +83,9 @@ def log(text, type=None, var=None, newline=False, color=None, step=None):
         print(print_text)
     elif type == 'text':
         print(Fore.LIGHTWHITE_EX + str(text) + Fore.RESET)
+    elif type == 'info' or type == 'i':
+        print_text = log_start + Fore.LIGHTBLUE_EX + '[INFO] ' + Fore.YELLOW + '| ' + Fore.LIGHTWHITE_EX + str(text) + Fore.RESET
+        print(print_text)
     elif type == 'menu':
         if newline == True:
             print_text = '\n'
@@ -136,32 +139,45 @@ def splash_screen():
 def create_settings():
     settings_data = {
         "launcher_settings": {
+            'first_launch': True,
+            'cat_mod_loader_setup_finished': False,
+            "autostart_enabled": False,
+            "autostart_timer": 3,
+            "autostart": 2,
             'paths': {
                 'game': {
                     'default': "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Halls of Torment",
-                    'custom': ''
+                    'custom': '',
+                    'selected': 'default'
                 },
                 'tools': {
                     'gdre': {
                         'default': "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Halls of Torment\\Tools",
-                        'custom': ''
+                        'custom': '',
+                        'selected': 'default'
                     },
                     'pck_explorer': {
                         'default': "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Halls of Torment\\Tools",
-                        'custom': ''
+                        'custom': '',
+                        'selected': 'default'
                     }
                 },
                 'game_extracted': {
-                    'default': "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Halls of Torment\\Extracted"
+                    'default': "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Halls of Torment\\Extracted",
+                    'custom': '',
+                    'selected': 'default'
                 }
-            },
-            "autostart_enabled": False,
-            "autostart_timer": 2,
-            "autostart": 0
+            }
         },
         'game_settings': {
             'verbose': False,
-            'debug': False
+            'debug': False,
+            'console': False,
+            'position': [0, 0]
+        },
+        'mod_settings': {
+            'auto_player': False,
+            'auto_trait_selection': True
         }
     }
     with open('settings.json', 'w') as file:
@@ -275,10 +291,24 @@ def get_pack_file_option(search, option_search):
 def create_launch_game_command(pack_file):
     if not pack_file:
         return
-    commands = ['start', 'cmd.exe', '/K']
+    commands = ['start']
+    cmd = ''
+    cmd_args = ''
+    position = [0, 0]
+    if get_game_setting('console') == True:
+        cmd = 'cmd.exe'
+        cmd_args = '/K'
+    commands.append(cmd)
+    commands.append(cmd_args)
     exe = get_pack_file_option(pack_file, 'exe')
     if exe:
         commands.append(exe)
+    try:
+        position = get_game_setting('position')
+        commands.append('--position')
+        commands.append(f'{position[0]},{position[1]}')
+    except Exception as error:
+        log(error, 'e')
     if get_game_setting('verbose') == True:
         commands.append('--verbose')
     if get_game_setting('debug') == True:
@@ -314,6 +344,12 @@ def get_game_processes():
                         return process_children
     except Exception as error:
         log(error, 'e')
+    try:
+        for process in psutil.process_iter(['pid', 'name']):
+            if process.info['name'] == 'HallsOfTorment.exe':
+                return process.info['pid']
+    except Exception as error:
+        log(error, 'e')
 
 def get_child_processes(parent_pid):
     child_processes = []
@@ -331,6 +367,8 @@ def exit_processes(processes):
     for process in processes:
         try:
             psutil.Process(process['pid']).terminate()
+            log(f'Terminated Process: {process['pid']}', 'd')
+            menu_start()
         except Exception as error:
             pass #log(error, 'e')
 
@@ -346,12 +384,31 @@ def get_log(file_size):
         new_lines = file.readlines()
         for line in new_lines:
             if "[CatModLoader]" in line:
-                log(line.strip().replace('[CatModLoader] | ', ''), 'mod')
-                game_logs.append(line.strip())
+                line = line.strip().replace('[CatModLoader] | ', '')
+                try:
+                    log_text = line.split(' | ')
+                except Exception as error:
+                    log(error, 'e')
+                if len(log_text) > 1:
+                    try:
+                        mod_name = log_text[0]
+                    except Exception as error:
+                        log(error, 'e')
+                    line = line.replace(mod_name, Fore.LIGHTRED_EX + mod_name + Fore.RESET)
+                if "[Version]" in line:
+                    _, version = line.split("[Version] | ")
+                    line = line.replace(f'[Version] | {version}', '')
+                    line += Fore.YELLOW + version + Fore.RESET
+                log(line, 'mod')
+                game_logs.append(line)
             elif "SCRIPT ERROR:" in line:
-                log(line.strip(), 'e')
+                log(line, 'e')
+            elif "ERROR: Failed to load script" in line:
+                log(line, 'e')
+            elif "ERROR: Script does not inherit from" in line:
+                log(line, 'e')
             elif "could not be loaded!" in line:
-                log(line.strip(), 'e')
+                log(line, 'e')
 
 def watch_game():
     global game_logs
@@ -359,19 +416,20 @@ def watch_game():
     file_size = 0
     processes = None
     log('[Launch Game]', 'title', newline=True)
+    time.sleep(1)
     while True:
         if is_running('HallsOfTorment.exe'):
-            if not processes or processes == []:
+            if not processes or processes == [] or processes == None:
                 processes = get_game_processes()
+                log('processes: ' + str(processes), 'd')
+                time.sleep(2)
             current_size = os.path.getsize(game_log)
             if current_size > file_size:
                 get_log(file_size)
                 file_size = current_size
-                
             time.sleep(0.1)
         else:
             exit_processes(processes)
-            break
 
 def watch_game_thread():
     while True:
@@ -426,8 +484,8 @@ def menu_launch_settings():
             log(f'[{(index + 1)}] - {option[0]}', 'menu', option[1])
         log('Go Back', 'menu-back', newline=True)
         user_input = input('\nOption: ')
-        if user_input == '0' or user_input == 'e':
-            return
+        if go_back(user_input) == True:
+            break
         elif user_input == '1':
             toggle_launcher_setting('autostart_enabled')
 
@@ -453,22 +511,43 @@ def extract_pack_file():
         wait()
 
 def add_modloader_to_game():
-    project_file = get_launcher_setting('paths', 'game_extracted', 'default') + '\\project.godot'
+    project_file_path = get_launcher_setting('paths', 'game_extracted', 'selected')
+    project_file = get_launcher_setting('paths', 'game_extracted', project_file_path) + '\\project.godot'
     if os.path.exists(project_file):
         with open(project_file, 'r') as file:
             lines = file.readlines()
         try:
-            index = lines.index('AutoPlayer="res://Utilities/AutoPlayer.gd"\n')
+            _ = lines.index('CatModLoader="*res://CatModLoader/cat_mod_loader.gd"\n')
+            return
         except Exception as error:
             log(error, 'e')
-        lines.insert(index, 'CatModLoader="*res://CatModLoader/cat_mod_loader.gd"\n')
+        try:
+            index = lines.index('[autoload]\n')
+        except Exception as error:
+            log(error, 'e')
+        lines.insert(index + 2, 'CatModLoader="*res://CatModLoader/cat_mod_loader.gd"\n')
         with open(project_file, 'w') as file:
             file.writelines(lines)
-        #try:
-        #    for line in lines:
-        #        log(line, 'd')
-        #except Exception as error:
-        #    log(error, 'e')
+    if verify_modloader() == True:
+        clear()
+        log('[Setup CatModLoader - Add to autoload]', 'title')
+        print('')
+        log('CatModLoader should now be added to your extracted game.\n', 'info')
+        wait()
+
+def verify_modloader():
+    project_file_path = get_launcher_setting('paths', 'game_extracted', 'selected')
+    project_file = get_launcher_setting('paths', 'game_extracted', project_file_path) + '\\project.godot'
+    if not os.path.exists(project_file):
+        return False
+    with open(project_file, 'r') as file:
+        lines = file.readlines()
+        try:
+            _ = lines.index('CatModLoader="*res://CatModLoader/cat_mod_loader.gd"\n')
+            return True
+        except Exception as error:
+            log(error, 'e')
+            return False
             
 def create_pack_file():
     pack_explorer_tool = f'"{get_launcher_setting('paths', 'tools', 'pck_explorer', 'default')}\\GoDotPCKExplorer.UI.exe"'
@@ -483,7 +562,8 @@ def setup_catmodloader():
     while True:
         clear()
         ## Step 1: Make sure the paths are correct. ##
-        game_path = get_launcher_setting('paths', 'game', 'default')
+        selected_game_path = get_launcher_setting('paths', 'game', 'selected')
+        game_path = get_launcher_setting('paths', 'game', selected_game_path)
         log('[Setup CatModLoader - Paths]', 'title')
         log(f'Set your game path.\n', 's', step='1')
         log(f'[Default]', 's', step='1')
@@ -520,15 +600,16 @@ def menu_tools_n_setup():
             'newline' : False
         },
         2: {
+            'text': 'Add Mod Loader To Game',
+            'func': add_modloader_to_game,
+            'newline': False
+        },
+        3: {
             'text': 'Create Pack File',
             'func': create_pack_file,
             'newline': False
         }
     }
-    #options = [
-    #    ['Extract Pack File', extract_pack_file],
-    #    ['Setup CatModLoader', setup_catmodloader]
-    #]
     while True:
         clear()
         log('[Tools & Setup Menu]', 'title')
@@ -547,6 +628,11 @@ def menu_tools_n_setup():
                 options[user_input]['func']()
             except Exception as error:
                 log(error, 'e')
+## Mod Settings Menu ##
+def menu_mod_settings():
+    clear()
+    log('[Mod Settings]', 'title')
+    wait()
 
 ## Main Menu Functions ##
 def menu_start_auto(options):
@@ -555,15 +641,19 @@ def menu_start_auto(options):
     try:
         time.sleep(get_launcher_setting('autostart_timer'))
     except KeyboardInterrupt:
-        os.system('cls')
         return
     try:
         options[get_launcher_setting('autostart')]['func'](options[get_launcher_setting('autostart')]['args'])
+    except KeyboardInterrupt:
+        return
     except Exception as error:
         log(error, 'e')
     while True:
         if is_running('HallsOfTorment.exe'):
-            time.sleep(0.01)
+            try:
+                time.sleep(0.01)
+            except KeyboardInterrupt:
+                break
         else:
             break
 
@@ -574,74 +664,99 @@ def menu_option_launch_game(version):
     get_pack_file_option(version, 'file')
     commands = create_launch_game_command(pack_file)
     launch_game(commands)
-
-def menu_start():
-    set_console_size(60, 15)
+    
+def create_main_menu_options():
     # Menu options
     options = {
         0: {
-            'text': "Start Modded Game",
+            'text': Fore.LIGHTGREEN_EX + "Start Modded Game" + Fore.RESET,
             'func': menu_option_launch_game,
             'args': 'modded',
             'newline': False},
         1: {
-            'text': "Start Default Game",
-            'func': menu_option_launch_game,
-            'args': 'default',
-            'newline': False},
-        2: {
-            'text': "Start Extracted Game",
+            'text': Fore.LIGHTGREEN_EX + "Start Extracted Game" + Fore.RESET,
             'func': menu_option_launch_game,
             'args': 'extracted',
             'newline': False},
+        2: {
+            'text': Fore.LIGHTGREEN_EX + "Start Default Game" + Fore.RESET,
+            'func': menu_option_launch_game,
+            'args': 'default',
+            'newline': False},
         3: {
-            'text': Fore.LIGHTGREEN_EX + 'Settings' + Fore.RESET,
+            'text': Fore.LIGHTGREEN_EX + 'Setup & Install CatModLoader' + Fore.RESET,
+            'func': setup_catmodloader,
+            'newline': True},
+        4: {
+            'text': Fore.YELLOW + 'Settings' + Fore.RESET,
             'func': menu_launch_settings,
             'newline': True
             },
-        4: {
+        5: {
+            'text': Fore.LIGHTGREEN_EX + 'Mod Settings' + Fore.RESET,
+            'func': menu_mod_settings,
+            'newline': False
+        },
+        6: {
             'text': Fore.CYAN + 'Tools & Setup' + Fore.RESET,
             'func': menu_tools_n_setup,
             'newline': False
         }}
-    while True:
-        clear()
-        if get_launcher_setting('autostart_enabled') == True:
-            while True:
-                menu_start_auto(options)
-        # Print menu
-        log('[Launch Menu]', 'title')
-        for index, option in enumerate(options):
-            log(f'[{index + 1}] - {options[option]['text']}', 'menu', newline=options[option]['newline'])
-        log('Go Back', type='menu-back', newline=True)
-        # Get user input 
-        user_input = input('\nOption: ')
-        if user_input == '0' or user_input == 'e' or user_input == 'E':
-            return
-        log(option, 'd')
-        # Set user_input to correct value 
-        user_input = int(user_input) - 1
-        # Launch game
-        try:
-            options[user_input]['func'](options[user_input]['args'])
-        except Exception as error:
+    if options:
+        return options
+
+def menu_start():
+    set_console_size(60, 15)
+    options = create_main_menu_options()
+    if get_launcher_setting('first_launch') == True:
+        setup_catmodloader()
+        set_launcher_setting('first_launch', False)
+    if get_launcher_setting('autostart_enabled') == True:
+        while True:
             try:
-                options[user_input]['func']()
-            except Exception as error:
-                log(error, 'e')
+                options = create_main_menu_options()
+                menu_start_auto(options)
+            except:
+                pass
+            break
+    if get_launcher_setting('cat_mod_loader_setup_finished') == False:
+        options[0]['text'] = Fore.LIGHTRED_EX + 'Start Modded Game' + Fore.RESET
+        options[1]['text'] = Fore.LIGHTRED_EX + 'Start Extracted Game' + Fore.RESET
+    # Print menu
+    clear()
+    log('[Launch Menu]', 'title')
+    for index, option in enumerate(options):
+        log(f'[{index + 1}] - {options[option]['text']}', 'menu', newline=options[option]['newline'])
+    log('Go Back', type='menu-back', newline=True)
+    # Get user input 
+    user_input = input('\nOption: ')
+    if user_input == '0' or user_input == 'e' or user_input == 'E':
+        return
+    log(option, 'd')
+    # Set user_input to correct value 
+    user_input = int(user_input) - 1
+    # Launch game
+    try:
+        options[user_input]['func'](options[user_input]['args'])
+    except Exception as error:
         try:
-            pass
+            options[user_input]['func']()
         except Exception as error:
             log(error, 'e')
-        while is_running('HallsOfTorment.exe'):
-            time.sleep(0.01)
+    try:
+        pass
+    except Exception as error:
+        log(error, 'e')
+    while is_running('HallsOfTorment.exe') == True:
+            time.sleep(0.25)
+    else:
+        menu_start()
 
 ## Start ##
 def start():
-    #setup_catmodloader()
-    #add_modloader_to_game()
-    #wait()
-    menu_start()
+    while True:
+        #add_modloader_to_game()
+        menu_start()
 
 splash_screen()
 start()

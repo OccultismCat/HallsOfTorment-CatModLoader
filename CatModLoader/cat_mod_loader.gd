@@ -1,19 +1,16 @@
 extends Control
 
 var mod = 'CatModLoader'
-var ver = '0.1.1'
+var ver = '0.1.2'
 
 var logs : Array
+var mod_settings = {}
 var mods_folder := OS.get_executable_path().get_base_dir() + "/mods/"
 var mods_dir := DirAccess.open(mods_folder)
 var mods_loaded : bool = false
 var input_timer = 0.0
 
 var nums := []
-
-# we load and instantiate the new scene manually, according to
-# https://docs.godotengine.org/en/latest/tutorials/scripting/singletons_autoload.html#custom-scene-switcher
-# so that we have a little more control over it than using change_scene...
 
 func get_all_mods():
 	if mods_dir:
@@ -55,8 +52,52 @@ func on_cooldown(seconds) -> bool:
 	
 func reset_cooldown():
 	input_timer = 0.0
+
+func load_mod_settings():
+	var settings_file = "settings.json"
+	var settings_text = FileAccess.get_file_as_string(settings_file)
+	var settings = JSON.parse_string(settings_text)
+	CatModLoader.cat_mod(mod, 'Settings has been loaded!')
+	return settings
+
+func _ready():
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	if mods_loaded == false:
+		mod_settings = load_mod_settings()
+		toggle_autoplayer(mod_settings['mod_settings']['auto_player'])
+		get_all_mods()
 	
+func _process(delta):
+	var items : Array = [TraitSelection.Selection.Gold, TraitSelection.Selection.Health]
+	if GameState.CurrentState == GameState.States.Overworld and get_current_scene() != null:
+		if mods_loaded == false:
+			print_mod_controls()
+			quick_play()
+			#set_game_state(GameState.States.RegisterOfHalls)
+		mods_loaded = true
+	if mods_loaded == true:
+		input_timer += delta
+		if GameState.CurrentState == 5:
+			if GlobalMenus.traitSelectionUI.currentState == TraitSelection.States.AlmsSelection:
+				GlobalMenus.traitSelectionUI.select(items.pick_random())
+			elif GlobalMenus.traitSelectionUI.currentState == TraitSelection.States.NormalTraitSelection:
+				GlobalMenus.traitSelectionUI.select(TraitSelection.Selection.Trait1)
+			GlobalMenus.traitSelectionUI.on_selection_confirmed(true)
+		if Input.is_key_pressed(KEY_1) and not Input.is_key_pressed(KEY_SHIFT) and not on_cooldown(1):
+			reset_cooldown()
+			print_loader_text()
+		## Quick Exit ##
+		if Input.is_key_pressed(KEY_1) and Input.is_key_pressed(KEY_SHIFT) and not on_cooldown(1):
+			if get_current_game_state_id() == GameState.States.InGame:
+				GameState.TransitionToState(GameState.States.Overworld, 0.2)
+			else:
+				quick_play()
+			reset_cooldown()
+
 ## Modding Functions ##
+func create_timer():
+	pass
+
 func get_world():
 	return Global.World
 	
@@ -87,6 +128,9 @@ func set_game_state(state):
 	
 func get_player_pos():
 	return Global.World.get_player_position()
+
+func get_player_world_pos():
+	return Global.World.Player.getChildNodeWithMethod('get_worldPosition')
 	
 func get_player():
 	return Global.World.Player
@@ -133,6 +177,96 @@ func collect_all_xp():
 	if collectAllXPNode != null:
 		collectAllXPNode.collectAllXP()
 	0
+
+func spawn_pickup():
+	pass
+
+func spawn_object():
+	pass
+
+
+func spawn(item, global_pos=false, valid=true, player_position=false, custom_pos=null):
+	var spawn_item = item
+	if typeof(item) == TYPE_STRING:
+		spawn_item = ResourceLoaderQueue.getCachedResource(item)
+		await ResourceLoaderQueue.waitForLoadingFinished()
+	var pos = Vector2.ZERO
+	if global_pos == true:
+		var player_pos = get_player_pos()
+		pos.x = player_pos.x
+		pos.y = player_pos.y
+	else:
+		pos += Vector2(randf_range(0, 0), randf_range(0, 0))
+	if player_position == true:
+		var player_pos = CatModLoader.get_player_pos()
+		pos.x = player_pos.x
+		pos.y = player_pos.y
+	if valid == true:
+		pos = Global.World.OffscreenPositioner.get_nearest_valid_position(pos)
+	var spawned = spawn_item.instantiate()
+	spawned.global_position = pos
+	if custom_pos != null:
+		spawned.global_position = custom_pos
+	Global.attach_toWorld(spawned)
+	#cat_log('Spawned new item/enemy/object', spawn_item._bundled.names[0])
+	return spawned
+
+signal spawned_fx
+
+func spawn_fx(fx, player_world_pos=true, custom_pos=null):
+	if not fx:
+		return
+	var spawn_fx = fx
+	if typeof(spawn_fx) == TYPE_STRING:
+		spawn_fx = await ResourceLoaderQueue.getCachedResource(spawn_fx)
+		await ResourceLoaderQueue.waitForLoadingFinished()
+	var pos = Vector2.ZERO
+	var player_pos = get_player_pos()
+	pos.x = player_pos.x
+	pos.y = player_pos.y
+	var spawned_fx = spawn_fx.instantiate()
+	spawned_fx.global_position = pos
+	Global.attach_toWorld(spawned_fx)
+	return spawned_fx
+
+func set_fx_indicator_text(fx_indicator:Node2D):
+	if not fx_indicator and not is_instance_valid(fx_indicator):
+		return
+
+func spawn_fx_indicator(text, player_pos=true, custom_pos=null):
+	var fx_indicator = await ResourceLoaderQueue.getCachedResource('res://FX/text_indicator/text_indicator.tscn')
+	await ResourceLoaderQueue.waitForLoadingFinished()
+	var spawned_fx_indicator = fx_indicator.instantiate()
+	var pos = CatModLoader.get_player_pos()
+	spawned_fx_indicator.global_position = pos
+	Global.attach_toWorld(spawned_fx_indicator)
+	#CatModLoader.cat_mod(mod, 'fx indicator', fx_indicator._bundled)
+	#fx_indicator.set_script('res://mods/OccultismCat-ModUtils/spawn_fx_indicator.gd')
+	var fx_indicator_text_node = spawned_fx_indicator.get_node('Container/Label')
+	var fx_indicator_icon_node = spawned_fx_indicator.get_node('Container/Icon')
+	fx_indicator_text_node.text = str(text)
+	spawned_fx_indicator.scale = (Vector2.ONE * 0.1)
+	spawned_fx_indicator.Lifetime = 3
+	spawned_fx_indicator.play()
+	return spawned_fx_indicator
+
+
+func spawn_text_fx(text, icon='', size=1, lifetime=2.5, global_pos=false, player_position=true, text_color=Color(1,1,1,1), icon_color=Color(1,1,1,1), custom_pos=null):
+	var text_fx = await ResourceLoaderQueue.getCachedResource('res://FX/text_indicator/text_indicator.tscn')
+	if typeof(icon) == TYPE_STRING:
+		icon = await ResourceLoaderQueue.getCachedResource(icon)
+	await ResourceLoaderQueue.waitForLoadingFinished()
+	var spawned_text_fx = await spawn(text_fx, global_pos, false, player_position, custom_pos)
+	#spawned_text_fx.global_position = 
+	var spawned_text_node = spawned_text_fx.get_node('Container/Label')
+	var spawned_icon_node = spawned_text_fx.get_node('Container/Icon')
+	spawned_text_node.text = str(text)
+	spawned_text_node.modulate = text_color
+	spawned_icon_node.set_texture(icon)
+	spawned_icon_node.modulate = icon_color
+	spawned_text_fx.scale = (Vector2.ONE * size)
+	spawned_text_fx.Lifetime = lifetime
+	spawned_text_fx.play()
 
 func find_in_list(list, search):
 	cat_log('Find In List', list.find(search))
@@ -197,37 +331,6 @@ func get_boss():
 	random_boss = all_bosses.pick_random()
 	return random_boss
 
-func spawn_pickup():
-	pass
-
-func spawn_object():
-	pass
-
-func spawn_fx():
-	pass
-
-func spawn(item, global_pos=false, valid=true, player_position=false):
-	var spawn_item = ResourceLoaderQueue.getCachedResource(item)
-	await ResourceLoaderQueue.waitForLoadingFinished()
-	var pos = Vector2.ZERO
-	if global_pos == true:
-		var player_pos = get_player_pos()
-		pos.x = player_pos.x
-		pos.y = player_pos.y
-	else:
-		pos += Vector2(randf_range(0, 0), randf_range(0, 0))
-	if player_position == true:
-		var player_pos = CatModLoader.get_player_pos()
-		pos.x = player_pos.x
-		pos.y = player_pos.y
-	if valid == true:
-		pos = Global.World.OffscreenPositioner.get_nearest_valid_position(pos)
-	var spawned = spawn_item.instantiate()
-	spawned.global_position = pos
-	Global.attach_toWorld(spawned)
-	#cat_log('Spawned new item/enemy/object', spawn_item._bundled.names[0])
-	return spawned
-
 func toggle_autoplayer(value: bool):
 	ProjectSettings.set_setting("halls_of_torment/development/enable_autoplayer", value)
 	var setting = ProjectSettings.get_setting("halls_of_torment/development/enable_autoplayer")
@@ -270,29 +373,3 @@ func cat_mod(script, function, value=null, data=null):
 func print_mod_controls():
 	cat_mod('Controls', "Key] [1] = Print Log")
 	cat_mod('Controls', "Key] [Shift + 1] = Quick Play")
-
-
-func _ready():
-	if mods_loaded == false:
-		#toggle_autoplayer(true)
-		get_all_mods()
-	
-func _process(delta):
-	if GameState.CurrentState == GameState.States.Overworld and get_current_scene() != null:
-		if mods_loaded == false:
-			print_mod_controls()
-			#quick_play()
-			#set_game_state(GameState.States.RegisterOfHalls)
-		mods_loaded = true
-	if mods_loaded == true:
-		input_timer += delta
-		if Input.is_key_pressed(KEY_1) and not Input.is_key_pressed(KEY_SHIFT) and not on_cooldown(1):
-			reset_cooldown()
-			print_loader_text()
-		## Quick Exit ##
-		if Input.is_key_pressed(KEY_1) and Input.is_key_pressed(KEY_SHIFT) and not on_cooldown(1):
-			if get_current_game_state_id() == GameState.States.InGame:
-				GameState.TransitionToState(GameState.States.Overworld, 0.2)
-			else:
-				quick_play()
-			reset_cooldown()
