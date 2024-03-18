@@ -25,7 +25,6 @@ func get_overworld_node():
 ## Custom Functions ## ## TODO FIX ARGS ORDER ##
 func spawn_custom_text_indicator(custom_text=null, custom_lifetime=null, animated_text=false, scale=null, icon_texture=null, add_to_array=false):
 	var custom_text_indicator = await CatModLoader.load_mod('res://CatModLoader/scripts/', 'custom_text_indicator.gd', false)
-	add_child(custom_text_indicator)
 	if custom_text != null:
 		custom_text_indicator.default_text = custom_text
 	if animated_text != false:
