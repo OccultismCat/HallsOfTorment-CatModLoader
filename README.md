@@ -2,7 +2,6 @@
 
 
 # HallsOfTorment Mods & CatModLoader. 
-[Preview GIF](https://fastupload.io/en/kPUcYDoaSkxZUeB/preview)
 
 ## Setup.
 **<ins>Setup for CatModLoader</ins>**
@@ -34,3 +33,6 @@
 **<ins>Get</ins>**
 1. **TBA**
     - TBA
+
+#
+![](https://github.com/OccultismCat/HallsOfTorment-CatModLoader/blob/main/CatModLoader.gif?raw=true)
