@@ -36,4 +36,4 @@
 
 
 #
-![](https://github.com/OccultismCat/HallsOfTorment-CatModLoader/blob/main/CatModLoader.gif?raw=true)
+![](https://github.com/OccultismCat/HallsOfTorment-CatModLoader/blob/main/CatModLoader.gif)
