@@ -6,7 +6,7 @@ var ver = '0.0.1'
 var cooldown = 0.0
 var cords_cooldown = 0.0
 var selected_cords = 0
-var cords : Array = [[0,0], [20,20], [-20,-20], [40,40], [-40,-40], [60, 60], [-60, -60]] #[[0,0], [100,100], [200,200], [300,300], [400,400], [500,500]]
+var cords : Array = [[0,0]] #[[0,0], [100,100], [200,200], [300,300], [400,400], [500,500]]
 var auto_teleport : bool = false
 var auto_tp_cooldown = 0.0
 
@@ -28,7 +28,7 @@ func teleport_to(x=null, y=null):
 	var cord = cords[selected_cords]
 	CatModLoader.set_player_pos(cord[0], cord[1])
 	selected_cords = (selected_cords + 1) % cords.size()
-	CatModLoader.cat_log("Teleporter: Teleporting To New Position!", cords[selected_cords])
+	#CatModLoader.cat_log("Teleporter: Teleporting To New Position!", cords[selected_cords])
 
 func _ready():
 	pass
@@ -39,14 +39,14 @@ func _process(delta):
 	auto_tp_cooldown += delta
 	
 	# Auto Teleport #
-	if Input.is_key_pressed(KEY_T) and Input.is_key_pressed(KEY_CTRL) and not on_cooldown(0.4):
+	if Input.is_key_pressed(KEY_T) and Input.is_key_pressed(KEY_CTRL) and not on_cooldown(0.5):
 		if auto_teleport == false:
 			auto_teleport = true
 		elif auto_teleport == true:
 			auto_teleport = false
 		print(auto_teleport)
 		cooldown = 0.0
-	if auto_teleport == true and not auto_teleport_cooldown(0.5):
+	if auto_teleport == true and not auto_teleport_cooldown(0.01):
 		teleport_to()
 		auto_tp_cooldown = 0.0
 	# Save Current POS #

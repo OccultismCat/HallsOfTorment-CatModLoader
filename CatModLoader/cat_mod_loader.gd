@@ -1,14 +1,19 @@
 extends Control
 
 var mod = 'CatModLoader'
-var ver = '0.1.2'
+var ver = '0.1.3'
 
-var logs : Array
 var mod_settings = {}
 var mods_folder := OS.get_executable_path().get_base_dir() + "/mods/"
+var catmodloader_folder := OS.get_executable_path().get_base_dir() + '/CatModLoader/'
 var mods_dir := DirAccess.open(mods_folder)
+var catmodloader_dir := DirAccess.open(catmodloader_folder)
 var mods_loaded : bool = false
 var input_timer = 0.0
+var text_timer = 0.0
+var text_timer_2 = 0.0
+var max_text_timer = 4.0
+var CatModUtils = null
 
 var nums := []
 
@@ -23,13 +28,14 @@ func get_all_mods():
 	if not mods_dir:
 		DirAccess.make_dir_absolute(mods_folder)
 	
-func load_mod(path, file):
+func load_mod(path, file, log=true):
 	var mod_script = await ResourceLoader.load(path + '/' + file)
 	if mod_script:
 		var mod_script_instance = mod_script.new()
 		add_child(mod_script_instance)
-		cat_mod(mod_script_instance.mod, 'Found & Loaded Mod', 'Version', mod_script_instance.ver)
-		logs.append(file.to_upper())
+		if log:
+			cat_mod(mod_script_instance.mod, 'Found & Loaded Mod', 'Version', mod_script_instance.ver)
+		return mod_script_instance
 			
 func load_mods_from_folder(path):
 	var inner_mod_folder = DirAccess.open(path)
@@ -39,12 +45,6 @@ func load_mods_from_folder(path):
 		while file != "":
 			load_mod(path, file)
 			file = inner_mod_folder.get_next()
-	
-func print_loader_text():
-	print("")
-	for log in logs:
-		cat_log(log)
-	print("")
 	
 func on_cooldown(seconds) -> bool:
 	return input_timer < seconds
@@ -65,27 +65,75 @@ func _ready():
 	if mods_loaded == false:
 		mod_settings = load_mod_settings()
 		toggle_autoplayer(mod_settings['mod_settings']['auto_player'])
+		CatModUtils = await load_mod(catmodloader_folder, '/utils/cat_mod_utils.gd')
+		#add_child(CatModUtils)
 		get_all_mods()
 	
 func _process(delta):
-	var items : Array = [TraitSelection.Selection.Gold, TraitSelection.Selection.Health]
 	if GameState.CurrentState == GameState.States.Overworld and get_current_scene() != null:
 		if mods_loaded == false:
-			print_mod_controls()
-			quick_play()
+			#quick_play()
 			#set_game_state(GameState.States.RegisterOfHalls)
-		mods_loaded = true
+			#CatModUtils.spawn_custom_text_indicator()
+			#mod_loaded = true
+			mods_loaded = true
+			print_mod_controls()
+			if ProjectSettings.get_setting("halls_of_torment/development/enable_autoplayer"):
+				quick_play()
 	if mods_loaded == true:
 		input_timer += delta
+		text_timer += delta
+		text_timer_2 += delta
+		if GameState.CurrentState == GameState.States.Overworld:
+			var current_player : Node2D
+			var player_pos : Vector2 = Vector2.ZERO
+			var scene_root = null
+			if not text_timer < max_text_timer and CatModUtils.spawned_custom_text_indicators.size() == 0:
+				scene_root = Global.get_parent()
+				if not scene_root.has_node("Overworld"):
+					return
+				scene_root = scene_root.get_node("Overworld")
+				if not scene_root:
+					return
+				current_player = scene_root.current_player_character
+				if current_player:
+					player_pos = current_player.getChildNodeWithMethod("get_worldPosition").global_position
+					player_pos.y += -50
+				#if current_player and current_player != null:
+				var text_indicator = CatModUtils.spawn_custom_text_indicator(CatModLoader.mod.to_upper(), 4, false, 0.1, 'res://Sprites/UI_gfx/marker_hating_heart.png', true)
+				if text_indicator != null:
+					if current_player and player_pos:
+						text_indicator.set_pos(player_pos)
+					text_indicator.set_text_color('random')
+					#text_timer = 0.0
+			if not text_timer < max_text_timer + max_text_timer and CatModUtils.spawned_custom_text_indicators.size() == 1:
+				var version_text_indicator = CatModUtils.spawn_custom_text_indicator('VER-' + CatModLoader.ver + '', 4, true, 0.5, 'res://Sprites/UI_gfx/marker_sentinel_orb.png', true)
+				if version_text_indicator != null:
+					if current_player and player_pos:
+						version_text_indicator.set_pos(player_pos)
+					version_text_indicator.set_text_color('random')
+					text_timer = 0.0
+					CatModUtils.spawned_custom_text_indicators.clear()
+				#overworld.add_child(text_indicator)
+				#CatModLoader.cat_mod(mod, 'Overworld Scene', scene_root)
+				#CatModLoader.cat_mod(mod, 'Overworld Player Pos', player_pos)
+				#CatModLoader.cat_mod(mod, 'Custom Text Indicator', text_indicator)			
+
 		if GameState.CurrentState == 5:
+			var items = [TraitSelection.Selection.Gold, TraitSelection.Selection.Health]
 			if GlobalMenus.traitSelectionUI.currentState == TraitSelection.States.AlmsSelection:
 				GlobalMenus.traitSelectionUI.select(items.pick_random())
 			elif GlobalMenus.traitSelectionUI.currentState == TraitSelection.States.NormalTraitSelection:
 				GlobalMenus.traitSelectionUI.select(TraitSelection.Selection.Trait1)
 			GlobalMenus.traitSelectionUI.on_selection_confirmed(true)
+		## Debug Button ##
 		if Input.is_key_pressed(KEY_1) and not Input.is_key_pressed(KEY_SHIFT) and not on_cooldown(1):
 			reset_cooldown()
-			print_loader_text()
+			var text_indicator = CatModUtils.spawn_custom_text_indicator('', 5, true, 0.01, 'res://CatModLoader/textures/CatModLoader.png', false)
+			if text_indicator:
+				var player_pos = get_player_pos()
+				if player_pos:
+					text_indicator.set_pos(player_pos)
 		## Quick Exit ##
 		if Input.is_key_pressed(KEY_1) and Input.is_key_pressed(KEY_SHIFT) and not on_cooldown(1):
 			if get_current_game_state_id() == GameState.States.InGame:
@@ -127,6 +175,8 @@ func set_game_state(state):
 	GameState.SetState(state) #GameState.States.RegisterOfHalls
 	
 func get_player_pos():
+	if not Global.World:
+		return Vector2.ZERO
 	return Global.World.get_player_position()
 
 func get_player_world_pos():
@@ -184,7 +234,6 @@ func spawn_pickup():
 func spawn_object():
 	pass
 
-
 func spawn(item, global_pos=false, valid=true, player_position=false, custom_pos=null):
 	var spawn_item = item
 	if typeof(item) == TYPE_STRING:
@@ -210,8 +259,6 @@ func spawn(item, global_pos=false, valid=true, player_position=false, custom_pos
 	Global.attach_toWorld(spawned)
 	#cat_log('Spawned new item/enemy/object', spawn_item._bundled.names[0])
 	return spawned
-
-signal spawned_fx
 
 func spawn_fx(fx, player_world_pos=true, custom_pos=null):
 	if not fx:
@@ -249,7 +296,6 @@ func spawn_fx_indicator(text, player_pos=true, custom_pos=null):
 	spawned_fx_indicator.Lifetime = 3
 	spawned_fx_indicator.play()
 	return spawned_fx_indicator
-
 
 func spawn_text_fx(text, icon='', size=1, lifetime=2.5, global_pos=false, player_position=true, text_color=Color(1,1,1,1), icon_color=Color(1,1,1,1), custom_pos=null):
 	var text_fx = await ResourceLoaderQueue.getCachedResource('res://FX/text_indicator/text_indicator.tscn')

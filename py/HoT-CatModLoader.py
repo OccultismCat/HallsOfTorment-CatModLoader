@@ -584,8 +584,8 @@ def setup_catmodloader():
         log(game_extracted_path, 'd')
         log(gdre_path, 'd')
         wait()
+        break
 
-## Functions Menu ## !Update to new menu method!
 def menu_tools_n_setup():
     set_console_size(60, 15)
     options = {
@@ -720,8 +720,10 @@ def menu_start():
                 pass
             break
     if get_launcher_setting('cat_mod_loader_setup_finished') == False:
-        options[0]['text'] = Fore.LIGHTRED_EX + 'Start Modded Game' + Fore.RESET
-        options[1]['text'] = Fore.LIGHTRED_EX + 'Start Extracted Game' + Fore.RESET
+        options[0]['text'] = Fore.RED + 'Start Modded Game' + Fore.RESET
+        options[1]['text'] = Fore.RED + 'Start Extracted Game' + Fore.RESET
+    else:
+        options[3]['text'] = Fore.RED + 'Setup & Install CatModLoader' + Fore.RESET
     # Print menu
     clear()
     log('[Launch Menu]', 'title')

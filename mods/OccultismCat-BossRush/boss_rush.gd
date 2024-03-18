@@ -10,7 +10,7 @@ var fx_text_timer = 0.0
 var boss_rush = true
 var start = true
 var difficultys = ['easy', 'normal', 'hard', 'expert', 'pro', 'insane', 'random']
-var current_difficulty_index = 1
+var current_difficulty_index = 0
 var current_difficulty = difficultys[current_difficulty_index]
 var player_level = 0
 var timer = 0.0
@@ -166,7 +166,9 @@ func _process(_delta):
         var random_fx_wait = CatModLoader.get_random_number(5, 10)
         var colors = [Color(1, 0, 0, 1), Color(0, 1, 0, 1), Color(0, 0, 1, 1), Color(1, 1, 0, 1), Color(0, 1, 1, 1)]
         if waves_survived_node and is_instance_valid(waves_survived_node):
-            waves_survived_node.global_position = CatModLoader.get_player_pos()
+            var pos = CatModLoader.get_player_pos()
+            pos.y += 20
+            waves_survived_node.global_position = pos
 
         if not fx_timer < random_fx_wait:
             CatModLoader.spawn_text_fx('', 'res://.godot/imported/h_mark_of_madness.png-1139fa4cdb60889165250e02cd28f490.s3tc.ctex', 0.01, 1, false, true, Color(1,1,1,1), Color(1,0,0,0.8))
@@ -176,6 +178,7 @@ func _process(_delta):
                 #CatModLoader.cat_mod(mod, 'Found wave survived node', waves_survived_node)
                 #CatModLoader.cat_mod(mod, 'Selected Color', selected_color)
                 var text_label = waves_survived_node.get_node('Container/Label')
+                colors.shuffle()
                 if colors.size() <= selected_color:
                     selected_color = 0
                 text_label.modulate = colors[selected_color]
