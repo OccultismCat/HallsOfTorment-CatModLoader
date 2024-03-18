@@ -3,7 +3,7 @@
 
 # HallsOfTorment Mods & CatModLoader. 
 
-## Setup. [GUIDE IS UNFINISHED, UNTIL MORE UPDATES ARE DONE!]
+## Setup. [GUIDE IS UNFINISHED UNTIL MORE UPDATES ARE DONE!]
 **<ins>Setup for CatModLoader</ins>**
 1. **Download the ZIP file:**
     - [HallsOfTorment-CatModLoader](https://github.com/OccultismCat/HallsOfTorment-CatModLoader/archive/refs/heads/main.zip)
