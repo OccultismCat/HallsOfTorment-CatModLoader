@@ -1,14 +1,17 @@
 [TODO]
-Rewrite the pack file stuff to use the settings json, could've just done that but it was before I had that added.
 Finish the setup function, making & using custom paths from the settings.
 Add rebuilding pack file, didnt have it before cause there was a bug in the tool at the time but is now fixed.
 
-[TODO: FIXES]
-Function "exit_processes" if you don't use the console it errors when the game is closed.
-When the launcher starts the game, it's suppose to wait until the game is closed before going back to the menu. But it currently starts the menu before that
+[TODO] [DONE]
+[!]Rewrite the pack file stuff to use the settings json, could've just done that but it was before I had that added.[!]
+
+[TODO: FIXES] [DONE]
+[!]Function "exit_processes" if you don't use the console it errors when the game is closed.[!]
+[!]When the launcher starts the game, it's suppose to wait until the game is closed before going back to the menu. But it currently starts the menu before that[!]
 
 [IDEAS]
 
 
 [MOD IDEAS]
 Endless Mode
+Twitch Plays HallsOfTorment

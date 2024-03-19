@@ -6,14 +6,17 @@ var ver = '0.1.3'
 var mod_settings = {}
 var mods_folder := OS.get_executable_path().get_base_dir() + "/mods/"
 var catmodloader_folder := OS.get_executable_path().get_base_dir() + '/CatModLoader/'
+var texture_imports_folder := OS.get_executable_path().get_base_dir() + '/CatModLoader/textures/imports/'
 var mods_dir := DirAccess.open(mods_folder)
 var catmodloader_dir := DirAccess.open(catmodloader_folder)
 var mods_loaded : bool = false
 var input_timer = 0.0
 var text_timer = 0.0
 var text_timer_2 = 0.0
-var max_text_timer = 4.0
+var max_text_timer = 4
 var CatModUtils = null
+
+var old_state = GameState.States
 
 var nums := []
 
@@ -100,25 +103,34 @@ func _process(delta):
 					player_pos = current_player.getChildNodeWithMethod("get_worldPosition").global_position
 					player_pos.y += -50
 				#if current_player and current_player != null:
-				var text_indicator = CatModUtils.spawn_custom_text_indicator(CatModLoader.mod.to_upper(), 4, false, 0.1, 'res://Sprites/UI_gfx/marker_hating_heart.png', true)
+				var text_indicator = CatModUtils.spawn_custom_text_indicator(CatModLoader.mod.to_upper(), 4, false, 0.1, texture_imports_folder + 'CatModLoader-32x32.png', true)
 				if text_indicator != null:
 					if current_player and player_pos:
 						text_indicator.set_pos(player_pos)
 					text_indicator.set_text_color('random')
-					#text_timer = 0.0
-			if not text_timer < max_text_timer + max_text_timer and CatModUtils.spawned_custom_text_indicators.size() == 1:
-				var version_text_indicator = CatModUtils.spawn_custom_text_indicator('VER-' + CatModLoader.ver + '', 4, true, 0.5, 'res://Sprites/UI_gfx/marker_sentinel_orb.png', true)
+				max_text_timer += 4
+			if not text_timer < max_text_timer and CatModUtils.spawned_custom_text_indicators.size() == 1:
+				var version_text_indicator = CatModUtils.spawn_custom_text_indicator('VER-' + CatModLoader.ver + '', 4, true, 0.5, texture_imports_folder + 'CatModLoader-32x32.png', true)
 				if version_text_indicator != null:
 					if current_player and player_pos:
 						version_text_indicator.set_pos(player_pos)
-					version_text_indicator.set_text_color('random')
-					text_timer = 0.0
-					CatModUtils.spawned_custom_text_indicators.clear()
+					version_text_indicator.set_text_color('yellow')
+				max_text_timer += 4
 				#overworld.add_child(text_indicator)
 				#CatModLoader.cat_mod(mod, 'Overworld Scene', scene_root)
 				#CatModLoader.cat_mod(mod, 'Overworld Player Pos', player_pos)
-				#CatModLoader.cat_mod(mod, 'Custom Text Indicator', text_indicator)			
+				#CatModLoader.cat_mod(mod, 'Custom Text Indicator', text_indicator)
+			if not text_timer < max_text_timer and CatModUtils.spawned_custom_text_indicators.size() == 2:
+				var credit_text_indicator = CatModUtils.spawn_custom_text_indicator('By OccultismCat', 8, false, 0.5, texture_imports_folder + 'OccultismCat-32x32.png', true)
+				if credit_text_indicator != null:
+					if current_player and player_pos:
+						credit_text_indicator.set_pos(player_pos)
+					credit_text_indicator.set_text_color('hot_pink')
+				max_text_timer = 8
+				text_timer = 0.0
+				CatModUtils.spawned_custom_text_indicators.clear()
 
+		## Auto Trait Select ##
 		if GameState.CurrentState == 5:
 			var items = [TraitSelection.Selection.Gold, TraitSelection.Selection.Health]
 			if GlobalMenus.traitSelectionUI.currentState == TraitSelection.States.AlmsSelection:
@@ -129,7 +141,7 @@ func _process(delta):
 		## Debug Button ##
 		if Input.is_key_pressed(KEY_1) and not Input.is_key_pressed(KEY_SHIFT) and not on_cooldown(1):
 			reset_cooldown()
-			var text_indicator = CatModUtils.spawn_custom_text_indicator('', 5, true, 0.01, 'res://CatModLoader/textures/CatModLoader.png', false)
+			var text_indicator = CatModUtils.spawn_custom_text_indicator('CATMODLOADER', 5, true, 1, 'res://CatModLoader/textures/CatModLoader-32x32.png-62acb85383f1c5fd2691ce9b9fccd6a5.ctex', false)
 			if text_indicator:
 				var player_pos = get_player_pos()
 				if player_pos:
@@ -170,9 +182,9 @@ func get_current_game_state_id():
 	return GameState.CurrentState
 	
 func set_game_state(state):
-	var states = get_game_states()
-	cat_log('Setting New GameState!', states[state])
+	old_state = get_current_game_state_id()
 	GameState.SetState(state) #GameState.States.RegisterOfHalls
+	cat_mod(mod, 'Set game state', state)
 	
 func get_player_pos():
 	if not Global.World:
@@ -382,7 +394,8 @@ func toggle_autoplayer(value: bool):
 	var setting = ProjectSettings.get_setting("halls_of_torment/development/enable_autoplayer")
 
 func quick_play():
-	Global.WorldsPool.enterWorld(3, false)
+	var random_number = get_random_number(0, 4)
+	Global.WorldsPool.enterWorld(random_number, false)
 
 func cat_log(text, extra=null):
 	var mod = "[CatModLoader] | "
@@ -404,9 +417,13 @@ func cat_debug(script, function, value=null):
 	else:
 		print(mod + '[' + script + '] | [' + str(function) + ']')
 	
-func cat_mod(script, function, value=null, data=null):
+func cat_mod(script, function, value=null, data=null, print_fps=false):
 	var mod = '[CatModLoader] | '
 	var print_text = mod
+	if print_fps:
+		var fps = Engine.get_frames_per_second()
+		print_text = '[' + str(fps) + '] | ' + mod
+
 	if value != null:
 		if data != null:
 			print_text += '[' + script + '] | [' + function + '] | [' + str(value) + '] | [' + str(data) + ']'

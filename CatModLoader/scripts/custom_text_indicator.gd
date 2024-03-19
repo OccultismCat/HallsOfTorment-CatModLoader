@@ -57,6 +57,7 @@ func set_text_color(c, c2=null, c3=null):
 		'blue': Color(0,0.5,1, 1),
 		'yellow': Color(1, 1, 0, alpha),
 		'pink': Color(1,0,0.5, alpha),
+		'hot_pink': Color(1,0,1, alpha),
 		'cyan': Color(0,1,1, alpha),
 		'purple': Color(0.5,0,0.5, alpha)
 	}

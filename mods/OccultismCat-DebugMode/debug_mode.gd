@@ -20,6 +20,14 @@ func reset_cooldown():
 func loop_reset_cooldown():
 	loop_timer = 0.0
 
+#func handle_game_state(newState:GameState.States, oldState:GameState.States):
+#	old_state = oldState
+	#if new_state == GameState.States.Debug and old_state == GameState.States.Overworld:
+	#	CatModLoader.set_game_state(GameState.States.Debug)
+	#if new_state == GameState.States.Overworld and old_state == GameState.States.Debug:
+	#	CatModLoader.set_game_state(GameState.States.Overworld)
+#	CatModLoader.cat_mod(mod, '[NEW]/[OLD]', newState, old_state)
+
 func _ready():
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	
@@ -30,13 +38,26 @@ func _process(delta):
 		Global.quit_game()
 		
 	if Input.is_key_pressed(KEY_QUOTELEFT) and not input_on_cooldown(0.5):
-		var current_game_state = CatModLoader.get_current_game_state_id()
-		if current_game_state == GameState.States.InGame:
-			CatModLoader.set_game_state(GameState.States.Debug)
-		elif current_game_state == GameState.States.Debug:
-			CatModLoader.set_game_state(GameState.States.InGame)
-		elif current_game_state == GameState.States.Paused:
-			CatModLoader.set_game_state(GameState.States.InGame)
+		var current_state = CatModLoader.get_current_game_state_id()
+		var states = GameState.States
+		#GameState.StateChanged.connect(handle_game_state)
+		if current_state == states.Debug:
+			if CatModLoader.old_state == states.Overworld:
+				CatModLoader.set_game_state(states.Overworld)
+			elif CatModLoader.old_state == states.InGame:
+				CatModLoader.set_game_state(states.InGame)
+		if current_state == states.Overworld:
+			CatModLoader.set_game_state(states.Debug)
+		elif current_state == states.InGame:
+			CatModLoader.set_game_state(states.Debug)
+		#elif current_game_state == GameState.States.Debug:
+		#	CatModLoader.set_game_state(GameState.States.OverWorld)
+		#	reset_cooldown()
+		#	break
+		#elif current_game_state == GameState.States.Debug:
+		#	CatModLoader.set_game_state(GameState.States.InGame)
+		#elif current_game_state == GameState.States.Paused:
+		#	CatModLoader.set_game_state(GameState.States.InGame)
 		reset_cooldown()
 	
 	if Input.is_key_pressed(KEY_9) and not Input.is_key_pressed(KEY_SHIFT) and not input_on_cooldown(0.5):
@@ -66,7 +87,7 @@ func _process(delta):
 
 	if Input.is_key_pressed(KEY_5) and not input_on_cooldown(1):
 		#CatModLoader.reset_player_health()
-		var weapons : Array = [606, 614, 615]
+		var weapons : Array = [103] #[606, 614, 615, 103, 104]
 		for weapon in weapons:
 			var new_item = Global.ItemsPool.find_item_with_weapon_index(weapon)
 			CatModLoader.cat_log('Equipping items!', weapons)
@@ -130,14 +151,13 @@ func _process(delta):
 		#CatModLoader.cat_debug('', '', menu)
 		#menu.onGoldChanged(1000)
 		
-	if Input.is_key_pressed(KEY_2) and Input.is_key_pressed(KEY_SHIFT) and not input_on_cooldown(0.1):
+	if Input.is_key_pressed(KEY_2) and Input.is_key_pressed(KEY_SHIFT) and not input_on_cooldown(0.01):
 		reset_cooldown()
-		if CatModLoader.get_current_game_state_id() != GameState.States.InGame:
+		var current_state = CatModLoader.get_current_game_state_id()
+		if current_state != GameState.States.InGame and current_state != GameState.States.TraitSelection and current_state != GameState.States.AbilitySelection and current_state != GameState.States.ItemPickup:
 			return
 		var current_level = Global.World.Level
-		CatModLoader.cat_log('', current_level)
 		var new_level = Global.World.getLevelUpExperience(current_level + 1)
-		CatModLoader.cat_log('', new_level)
 		Global.World.addExperience(new_level, true)
 		#var current_gold = Global.World.Gold
 		#CatModLoader.cat_log('', current_gold)
